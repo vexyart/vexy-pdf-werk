@@ -1,0 +1,14 @@
+site_name: Vexy PDF Werk
+site_url: https://vexyart.github.io/vexy-pdf-werk/
+repo_url: https://github.com/vexyart/vexy-pdf-werk/
+
+theme:
+  name: material
+
+nav:
+  - 'index.md'
+  - '01-getting-started/index.md'
+  - '02-user-guide/index.md'
+  - '03-api-reference/index.md'
+  - '04-specification/index.md'
+  - '05-development/index.md'

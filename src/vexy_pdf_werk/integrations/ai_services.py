@@ -87,32 +87,42 @@ class ClaudeCLIService(AIService):
 
     def _create_correction_prompt(self, text: str, context: str) -> str:
         """Create prompt for OCR correction."""
-        return f"""
-Please review and correct any OCR errors in the following text.
-Maintain the original formatting, structure, and meaning.
-Only fix obvious OCR mistakes like character substitutions or garbled words.
-Do not add, remove, or rephrase content.
+        return f"""Instructions:
+You are an expert OCR error correction specialist. The text below contains OCR errors that need to be fixed.
+
+Task requirements:
+- Correct only obvious OCR mistakes: character substitutions, garbled words, missing spaces
+- Maintain ALL original formatting, structure, and meaning
+- Do NOT add, remove, or rephrase any content
+- Do NOT change correct words or proper formatting
 
 Context: {context}
 
 Text to correct:
+\"\"\"
 {text}
+\"\"\"
 
-Return only the corrected text, nothing else.
-        """.strip()
+Return only the corrected text, nothing else.""".strip()
 
     def _create_enhancement_prompt(self, text: str, document_type: str) -> str:
         """Create prompt for content enhancement."""
-        return f"""
-Please enhance the formatting and structure of this {document_type} text while preserving all content.
-Fix any formatting issues, ensure proper heading hierarchy, and improve readability.
-Maintain all original information and meaning.
+        return f"""Instructions:
+You are an expert document formatter. The text below is a {document_type} document that needs formatting improvements.
+
+Task requirements:
+- Enhance formatting and structure while preserving ALL content
+- Fix formatting issues: proper heading hierarchy, paragraph breaks, lists
+- Improve readability through better organization
+- Maintain ALL original information and meaning
+- Do NOT add, remove, or rephrase any content
 
 Text to enhance:
+\"\"\"
 {text}
+\"\"\"
 
-Return the enhanced text in markdown format.
-        """.strip()
+Return the enhanced text in markdown format, nothing else.""".strip()
 
     async def _call_claude(self, prompt: str, fallback: str) -> str:
         """Generic Claude CLI call with fallback."""
@@ -163,16 +173,32 @@ Return the enhanced text in markdown format.
         return await self._call_claude(prompt, fallback="")
 
     def _create_structure_enhancement_prompt(self, text_content: str) -> str:
-        return f"""
-Please analyze the following text content from a PDF page.
-1. Correct any orthographical or logical errors.
-2. Suggest improvements to the structure.
-3. Provide suggestions for PDF/A tagging based on the content.
-4. Return your changes as a unified diff.
+        return f"""Instructions:
+You are an expert document editor. The text below was extracted from a PDF via OCR and may contain both textual errors and structural problems.
 
-Original Text:
+Task requirements:
+- Step 1: Correct all orthographical (spelling, grammar) and logical errors (misplaced, repeated, or missing words)
+- Step 2: Improve document structure: restore headings, paragraph breaks, bullet/numbered lists, and tables based on content context
+- Step 3: Do NOT insert new content or change meaning - only correct errors and improve formatting/structure
+- Step 4: Return ALL changes as a single unified diff (unidiff) format where removed lines are prefixed with "-" and added lines with "+"
+
+Example unified diff format:
+```
+--- original
++++ corrected
+@@ -1,3 +1,3 @@
+ This line stays the same
+-This line has an eror
++This line has an error
+ Another unchanged line
+```
+
+Text to correct and format:
+\"\"\"
 {text_content}
-""".strip()
+\"\"\"
+
+Output only the unified diff, nothing else.""".strip()
 
 
 class GeminiCLIService(AIService):
@@ -219,7 +245,23 @@ class GeminiCLIService(AIService):
 
     def _create_correction_prompt(self, text: str, context: str) -> str:
         """Create OCR correction prompt for Gemini."""
-        return f"Correct OCR errors in this text, maintaining original meaning:\n\n{text}"
+        return f"""Instructions:
+You are an expert OCR error correction specialist. The text below contains OCR errors that need to be fixed.
+
+Task requirements:
+- Correct only obvious OCR mistakes: character substitutions, garbled words, missing spaces
+- Maintain ALL original formatting, structure, and meaning
+- Do NOT add, remove, or rephrase any content
+- Do NOT change correct words or proper formatting
+
+Context: {context}
+
+Text to correct:
+\"\"\"
+{text}
+\"\"\"
+
+Return only the corrected text, nothing else.""".strip()
 
     def is_available(self) -> bool:
         """Check if Gemini CLI is available."""
@@ -241,16 +283,32 @@ class GeminiCLIService(AIService):
         return ""
 
     def _create_structure_enhancement_prompt(self, text_content: str) -> str:
-        return f"""
-Please analyze the following text content from a PDF page.
-1. Correct any orthographical or logical errors.
-2. Suggest improvements to the structure.
-3. Provide suggestions for PDF/A tagging based on the content.
-4. Return your changes as a unified diff.
+        return f"""Instructions:
+You are an expert document editor. The text below was extracted from a PDF via OCR and may contain both textual errors and structural problems.
 
-Original Text:
+Task requirements:
+- Step 1: Correct all orthographical (spelling, grammar) and logical errors (misplaced, repeated, or missing words)
+- Step 2: Improve document structure: restore headings, paragraph breaks, bullet/numbered lists, and tables based on content context
+- Step 3: Do NOT insert new content or change meaning - only correct errors and improve formatting/structure
+- Step 4: Return ALL changes as a single unified diff (unidiff) format where removed lines are prefixed with "-" and added lines with "+"
+
+Example unified diff format:
+```
+--- original
++++ corrected
+@@ -1,3 +1,3 @@
+ This line stays the same
+-This line has an eror
++This line has an error
+ Another unchanged line
+```
+
+Text to correct and format:
+\"\"\"
 {text_content}
-""".strip()
+\"\"\"
+
+Output only the unified diff, nothing else.""".strip()
 
 
 class AIServiceFactory:

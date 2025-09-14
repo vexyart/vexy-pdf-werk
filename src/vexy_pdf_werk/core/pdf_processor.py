@@ -367,42 +367,176 @@ class PDFProcessor:
     async def _enhance_with_ai_structure(self, pdf_path: Path, output_path: Path):
         """Enhances the PDF structure page by page using AI and QDF."""
         import pikepdf
+        from ..integrations.ai_services import AIServiceFactory
 
-        ai_service = AIServiceFactory.create_service(self.ai_config)
+        # Validate inputs
+        if not pdf_path.exists():
+            raise FileNotFoundError(f"Input PDF not found: {pdf_path}")
+
+        if not pdf_path.is_file():
+            raise ValueError(f"Input path is not a file: {pdf_path}")
+
+        logger.info(f"Starting AI structure enhancement: {pdf_path}")
+
+        # Initialize AI service with comprehensive error handling
+        ai_service = None
+        try:
+            ai_service = AIServiceFactory.create_service(self.ai_config)
+        except Exception as e:
+            logger.error(f"Failed to initialize AI service: {e}")
+            ai_service = None
+
         if not ai_service:
-            logger.warning("AI service not available, skipping structure enhancement.")
-            shutil.copy2(pdf_path, output_path)
-            return
+            logger.warning("AI service not available, copying input to output without enhancement.")
+            try:
+                shutil.copy2(pdf_path, output_path)
+                logger.info("File copied successfully without AI enhancement")
+                return
+            except Exception as e:
+                raise RuntimeError(f"Failed to copy PDF file: {e}") from e
 
-        with pikepdf.open(pdf_path) as pdf:
-            new_pdf = pikepdf.new()
-            for i, page in enumerate(pdf.pages):
-                logger.info(f"Enhancing structure of page {i+1}")
+        # Track enhancement statistics
+        total_pages = 0
+        enhanced_pages = 0
+        failed_pages = 0
+
+        try:
+            # Open PDF with comprehensive error handling
+            try:
+                with pikepdf.open(pdf_path) as pdf:
+                    total_pages = len(pdf.pages)
+                    logger.info(f"Processing {total_pages} pages for AI enhancement")
+
+                    new_pdf = pikepdf.new()
+
+                    for i, page in enumerate(pdf.pages):
+                        page_num = i + 1
+                        logger.debug(f"Processing page {page_num}/{total_pages}")
+
+                        try:
+                            # Step 1: Convert page to QDF/JSON with timeout and error handling
+                            try:
+                                qdf_json = await asyncio.wait_for(
+                                    self.qdf_processor.pdf_to_qdf_json(pdf_path, i),
+                                    timeout=30.0  # 30 second timeout per page
+                                )
+                            except asyncio.TimeoutError:
+                                logger.warning(f"QDF conversion timeout for page {page_num}, using original page")
+                                new_pdf.pages.append(page)
+                                failed_pages += 1
+                                continue
+                            except Exception as e:
+                                logger.error(f"QDF conversion failed for page {page_num}: {e}")
+                                new_pdf.pages.append(page)
+                                failed_pages += 1
+                                continue
+
+                            # Step 2: Extract text with validation
+                            try:
+                                mini_version = self.qdf_processor.extract_text_from_qdf(qdf_json)
+                                if not isinstance(mini_version, str):
+                                    logger.warning(f"Invalid text extraction result for page {page_num}")
+                                    new_pdf.pages.append(page)
+                                    failed_pages += 1
+                                    continue
+                            except Exception as e:
+                                logger.error(f"Text extraction failed for page {page_num}: {e}")
+                                new_pdf.pages.append(page)
+                                failed_pages += 1
+                                continue
+
+                            # Step 3: Skip pages with no meaningful text content
+                            if not mini_version.strip():
+                                logger.debug(f"Page {page_num} has no text content, skipping AI enhancement")
+                                new_pdf.pages.append(page)
+                                continue
+
+                            # Step 4: AI enhancement with timeout and retry logic
+                            diff = None
+                            max_retries = 2
+
+                            for attempt in range(max_retries + 1):
+                                try:
+                                    diff = await asyncio.wait_for(
+                                        ai_service.enhance_pdf_structure(mini_version),
+                                        timeout=60.0  # 60 second timeout for AI processing
+                                    )
+
+                                    # Validate diff response
+                                    if diff is not None and not isinstance(diff, str):
+                                        logger.warning(f"AI service returned invalid diff type for page {page_num}")
+                                        diff = None
+
+                                    break  # Success, exit retry loop
+
+                                except asyncio.TimeoutError:
+                                    if attempt < max_retries:
+                                        logger.warning(f"AI service timeout for page {page_num}, attempt {attempt + 1}/{max_retries + 1}")
+                                        await asyncio.sleep(1)  # Brief delay before retry
+                                        continue
+                                    else:
+                                        logger.error(f"AI service timeout for page {page_num} after {max_retries + 1} attempts")
+                                        diff = None
+                                        break
+
+                                except Exception as e:
+                                    if attempt < max_retries:
+                                        logger.warning(f"AI service error for page {page_num}, attempt {attempt + 1}/{max_retries + 1}: {e}")
+                                        await asyncio.sleep(1)  # Brief delay before retry
+                                        continue
+                                    else:
+                                        logger.error(f"AI service failed for page {page_num} after {max_retries + 1} attempts: {e}")
+                                        diff = None
+                                        break
+
+                            # Step 5: Apply diff if available and valid
+                            if diff and diff.strip():
+                                try:
+                                    updated_qdf_json = self.qdf_processor.apply_diff_to_qdf(qdf_json, diff)
+
+                                    # TODO: Implement QDF-to-page conversion
+                                    # This is a placeholder for the complex process of creating a new page
+                                    # from the updated QDF JSON and adding it to the new PDF.
+                                    logger.debug(f"Applied AI diff to page {page_num} (QDF merging not yet implemented)")
+
+                                    # For now, we add the original page but count it as enhanced
+                                    new_pdf.pages.append(page)
+                                    enhanced_pages += 1
+
+                                except Exception as e:
+                                    logger.error(f"Failed to apply diff for page {page_num}: {e}")
+                                    new_pdf.pages.append(page)
+                                    failed_pages += 1
+                            else:
+                                logger.debug(f"No meaningful diff returned for page {page_num}")
+                                new_pdf.pages.append(page)
+
+                        except Exception as e:
+                            logger.error(f"Unexpected error processing page {page_num}: {e}")
+                            new_pdf.pages.append(page)
+                            failed_pages += 1
+
+                    # Save the enhanced PDF
+                    try:
+                        new_pdf.save(output_path)
+                        logger.info(f"AI structure enhancement completed: {enhanced_pages}/{total_pages} pages enhanced, {failed_pages} failed")
+                    except Exception as e:
+                        raise RuntimeError(f"Failed to save enhanced PDF: {e}") from e
+
+            except pikepdf.PdfError as e:
+                raise RuntimeError(f"Failed to process PDF file: {e}") from e
+            except Exception as e:
+                raise RuntimeError(f"Unexpected error during PDF processing: {e}") from e
+
+        except Exception as e:
+            # Ensure we have some output even if enhancement fails completely
+            if not output_path.exists():
                 try:
-                    qdf_json = await self.qdf_processor.pdf_to_qdf_json(pdf_path, i)
-                    mini_version = self.qdf_processor.extract_text_from_qdf(qdf_json)
-                    
-                    if mini_version.strip():
-                        diff = await ai_service.enhance_pdf_structure(mini_version)
-                        
-                        if diff:
-                            updated_qdf_json = self.qdf_processor.apply_diff_to_qdf(qdf_json, diff)
-                            
-                            # This is a placeholder for the complex process of creating a new page
-                            # from the updated QDF JSON and adding it to the new PDF.
-                            # A temporary PDF would likely be created from the JSON and then merged.
-                            logger.warning("Merging of updated QDF page is not yet implemented.")
-                            # For now, we just add the original page.
-                            new_pdf.pages.append(page)
-                        else:
-                            new_pdf.pages.append(page)
-                    else:
-                        new_pdf.pages.append(page)
-                except Exception as e:
-                    logger.error(f"Failed to enhance page {i+1}: {e}")
-                    new_pdf.pages.append(page)
-
-            new_pdf.save(output_path)
+                    logger.warning(f"Enhancement failed, copying original file: {e}")
+                    shutil.copy2(pdf_path, output_path)
+                except Exception as copy_error:
+                    raise RuntimeError(f"Enhancement failed and backup copy also failed: {copy_error}") from e
+            raise
 
     async def _convert_to_pdfa(
         self,

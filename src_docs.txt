@@ -1,0 +1,726 @@
+Project Structure:
+📁 src_docs
+├── 📁 01-getting-started
+│   ├── 📄 00-installation.md
+│   └── 📄 01-quick-start.md
+├── 📁 02-user-guide
+│   ├── 📄 00-cli-usage.md
+│   ├── 📄 01-configuration.md
+│   └── 📄 02-output-formats.md
+├── 📁 03-api-reference
+│   ├── 📄 00-index.md
+│   ├── 📄 01-core-components.md
+│   ├── 📄 02-integrations.md
+│   └── 📄 03-utilities.md
+├── 📁 04-specification
+│   ├── 📄 00-introduction-and-architecture.md
+│   ├── 📄 01-technology-stack-and-configuration.md
+│   ├── 📄 02-integration-points-and-error-handling.md
+│   ├── 📄 03-security-performance-and-quality.md
+│   └── 📄 04-extensibility-and-success-criteria.md
+├── 📁 05-development
+│   ├── 📄 00-contributing.md
+│   ├── 📄 01-testing.md
+│   └── 📄 02-release-process.md
+└── 📄 00-index.md
+
+
+<documents>
+<document index="1">
+<source>00-index.md</source>
+<document_content>
+# Vexy PDF Werk Documentation
+
+**TL;DR:** Vexy PDF Werk (VPW) is a Python package and command-line tool to convert PDF documents into high-quality, accessible formats like PDF/A, Markdown, and ePub, with optional AI-powered enhancement.
+
+## Table of Contents
+
+- **Getting Started**
+    - [Installation](01-getting-started/00-installation.md)
+    - [Quick Start](01-getting-started/01-quick-start.md)
+- **User Guide**
+    - [CLI Usage](02-user-guide/00-cli-usage.md)
+    - [Configuration](02-user-guide/01-configuration.md)
+    - [Output Formats](02-user-guide/02-output-formats.md)
+- **API Reference**
+    - [Core Components](03-api-reference/01-core-components.md)
+    - [Integrations](03-api-reference/02-integrations.md)
+    - [Utilities](03-api-reference/03-utilities.md)
+- **Specification**
+    - [Introduction and Architecture](04-specification/00-introduction-and-architecture.md)
+    - [Technology Stack and Configuration](04-specification/01-technology-stack-and-configuration.md)
+    - ... (and so on for all spec files)
+- **Development**
+    - [Contributing](05-development/00-contributing.md)
+    - [Testing](05-development/01-testing.md)
+    - [Release Process](05-development/02-release-process.md)
+
+</document_content>
+</document>
+
+<document index="2">
+<source>01-getting-started/00-installation.md</source>
+<document_content>
+# Installation
+
+## From PyPI
+
+```bash
+pip install vexy-pdf-werk
+```
+
+## In Development Mode
+
+```bash
+git clone https://github.com/vexyart/vexy-pdf-werk
+cd vexy-pdf-werk
+pip install -e .
+```
+
+## System Dependencies
+
+Vexy PDF Werk relies on a few external tools for its core functionality.
+
+### Required Dependencies
+
+-   Python 3.10+
+-   tesseract-ocr
+-   qpdf
+-   ghostscript
+
+### Optional Dependencies
+
+-   pandoc (for ePub generation)
+-   marker-pdf (for advanced PDF conversion)
+-   markitdown (for Microsoft's document converter)
+-   docling (for IBM's document understanding)
+
+### Installation Commands
+
+**Ubuntu/Debian:**
+
+```bash
+sudo apt-get update
+sudo apt-get install tesseract-ocr tesseract-ocr-eng qpdf ghostscript pandoc
+```
+
+**macOS:**
+
+```bash
+brew install tesseract tesseract-lang qpdf ghostscript pandoc
+```
+
+**Windows:**
+
+```bash
+choco install tesseract qpdf ghostscript pandoc
+```
+
+</document_content>
+</document>
+
+<document index="3">
+<source>01-getting-started/01-quick-start.md</source>
+<document_content>
+# Quick Start
+
+The fastest way to get started with Vexy PDF Werk is to use the `vpw` command-line tool.
+
+## Process a PDF
+
+To process a PDF file with the default settings, simply run:
+
+```bash
+vpw process my_document.pdf
+```
+
+This will create a directory named `output/my_document` containing the following files:
+
+-   `my_document_enhanced.pdf`: A PDF/A version of your document with an OCR text layer.
+-   A series of Markdown files, one for each page of your document.
+-   `my_document.epub`: An ePub version of your document.
+-   `metadata.yaml`: A file containing bibliographic and processing metadata.
+
+## Customize the Output
+
+You can easily customize the output by providing additional options:
+
+```bash
+# Specify a different output directory and only generate Markdown and ePub files
+vpw process my_document.pdf --output_dir ./my_docs --formats "markdown,epub"
+```
+
+</document_content>
+</document>
+
+<document index="4">
+<source>02-user-guide/00-cli-usage.md</source>
+<document_content>
+# CLI Usage
+
+The primary way to use Vexy PDF Werk is through its command-line interface, `vpw`.
+
+## `vpw process`
+
+Processes a PDF file through the complete VPW pipeline.
+
+**Usage:**
+
+```bash
+vpw process [OPTIONS] <pdf_path>
+```
+
+**Arguments:**
+
+-   `<pdf_path>`: Path to the input PDF file.
+
+**Options:**
+
+-   `--output_dir`: Output directory (default: `./output/<pdf_name>`).
+-   `--formats`: Comma-separated list of output formats (default: `pdfa,markdown,epub,yaml`).
+-   `--verbose`: Enable verbose logging.
+-   `--config_file`: Path to a custom config file.
+
+## `vpw config`
+
+Manages the VPW configuration.
+
+**Usage:**
+
+```bash
+vpw config [OPTIONS]
+```
+
+**Options:**
+
+-   `--show`: Display the current configuration.
+-   `--init`: Initialize a default configuration file.
+
+## `vpw version`
+
+Displays the version of Vexy PDF Werk.
+
+</document_content>
+</document>
+
+<document index="5">
+<source>02-user-guide/01-configuration.md</source>
+<document_content>
+# Configuration
+
+Vexy PDF Werk uses a `config.toml` file for configuration, which is located in the user's config directory (e.g., `~/.config/vexy-pdf-werk/config.toml`).
+
+You can initialize a default configuration file by running `vpw config --init`.
+
+The configuration is divided into the following sections:
+
+## `[processing]`
+
+-   `ocr_language`: The language to use for OCR (default: `eng`).
+-   `pdf_quality`: The quality of the output PDF (default: `high`).
+-   `force_ocr`: Whether to force OCR on all pages (default: `false`).
+-   `deskew`: Whether to deskew pages (default: `true`).
+-   `rotate_pages`: Whether to rotate pages (default: `true`).
+
+## `[conversion]`
+
+-   `markdown_backend`: The backend to use for Markdown conversion (default: `auto`).
+-   `paginate_markdown`: Whether to create a separate Markdown file for each page (default: `true`).
+-   `include_images`: Whether to include images in the Markdown output (default: `true`).
+-   `extract_tables`: Whether to extract tables from the PDF (default: `true`).
+
+## `[ai]`
+
+-   `enabled`: Whether to enable AI features (default: `false`).
+-   `provider`: The AI provider to use (default: `claude`).
+-   `correction_enabled`: Whether to enable AI-powered text correction (default: `false`).
+-   `enhancement_enabled`: Whether to enable AI-powered content enhancement (default: `false`).
+-   `structure_enhancement_enabled`: Whether to enable AI-powered structure enhancement (default: `false`).
+-   `max_tokens`: The maximum number of tokens to use for AI requests (default: `4000`).
+
+## `[output]`
+
+-   `formats`: A list of output formats to generate (default: `["pdfa", "markdown", "epub", "yaml"]`).
+-   `preserve_original`: Whether to preserve the original PDF file (default: `true`).
+-   `output_directory`: The directory to save the output files to (default: `./output`).
+-   `filename_template`: A template for the output filenames (default: `{stem}_{format}.{ext}`).
+
+</document_content>
+</document>
+
+<document index="6">
+<source>02-user-guide/02-output-formats.md</source>
+<document_content>
+# Output Formats
+
+Vexy PDF Werk can generate a variety of output formats from a single PDF file.
+
+## PDF/A
+
+A PDF/A file is an archivable version of your PDF. It includes a searchable text layer (thanks to OCR) and is standardized for long-term preservation.
+
+## Markdown
+
+VPW can convert your PDF into a series of Markdown files, one for each page. This is useful for extracting the text content of your PDF and for further processing.
+
+## ePub
+
+An ePub file is an e-book format that can be read on a variety of devices. VPW generates an ePub file from the Markdown content.
+
+## YAML
+
+A YAML file containing bibliographic and processing metadata is also generated. This includes information like the number of pages, the author and title of the document, and the processing time.
+
+</document_content>
+</document>
+
+<document index="7">
+<source>03-api-reference/00-index.md</source>
+<document_content>
+# API Reference
+
+This section provides detailed documentation for the Vexy PDF Werk API.
+
+-   [Core Components](01-core-components.md)
+-   [Integrations](02-integrations.md)
+-   [Utilities](03-utilities.md)
+
+</document_content>
+</document>
+
+<document index="8">
+<source>03-api-reference/01-core-components.md</source>
+<document_content>
+# Core Components
+
+This section describes the core components of the Vexy PDF Werk package.
+
+## `PDFProcessor`
+
+The `PDFProcessor` class is the main engine for PDF processing. It handles:
+
+-   Analyzing PDF structure and content.
+-   Applying OCR to scanned documents using `ocrmypdf`.
+-   Converting PDFs to the PDF/A format using `qpdf`.
+-   Coordinating with the `QDFProcessor` and `AIService` for advanced AI-powered structure enhancement.
+
+## `MarkdownGenerator`
+
+The `MarkdownGenerator` class is responsible for converting PDFs to Markdown. It supports multiple backends:
+
+-   **`BasicConverter`**: A fallback converter that uses `pypdf` for basic text extraction.
+-   **`MarkerConverter`**: An optional backend that uses the `marker-pdf` library for high-fidelity conversion.
+-   **`MarkItDownConverter`**: An optional backend that uses the `markitdown` library.
+
+## `EpubCreator`
+
+The `EpubCreator` class generates an ePub file from the Markdown content produced by the `MarkdownGenerator`.
+
+## `MetadataExtractor`
+
+The `MetadataExtractor` class extracts comprehensive metadata from the PDF and the processing results, and saves it to a `metadata.yaml` file.
+
+## `QDFProcessor`
+
+The `QDFProcessor` class is a new component that handles the conversion of PDF pages to and from the QDF/JSON format. This is used for the advanced AI-powered structure enhancement feature.
+
+</document_content>
+</document>
+
+<document index="9">
+<source>03-api-reference/02-integrations.md</source>
+<document_content>
+# Integrations
+
+This section describes the integration with external services, particularly AI services.
+
+## `AIService`
+
+The `AIService` class is an abstract base class that defines the interface for AI services. It has the following methods:
+
+-   `correct_text(text: str, context: str = "") -> str`: Corrects OCR errors in text.
+-   `enhance_content(text: str, document_type: str = "general") -> str`: Enhances content structure and formatting.
+-   `enhance_pdf_structure(text_content: str) -> str`: Enhances PDF structure and returns a diff.
+-   `is_available() -> bool`: Checks if the AI service is available.
+
+## `ClaudeCLIService`
+
+A concrete implementation of `AIService` that uses the `claude` CLI tool to interact with Anthropic's models.
+
+## `GeminiCLIService`
+
+A concrete implementation of `AIService` that uses the `gemini` CLI tool to interact with Google's models.
+
+## `AIServiceFactory`
+
+A factory class for creating AI services based on the configuration. It also provides a method to list all available AI services.
+
+</document_content>
+</document>
+
+<document index="10">
+<source>03-api-reference/03-utilities.md</source>
+<document_content>
+# Utilities
+
+This section describes the utility functions used in the Vexy PDF Werk package.
+
+## `file_utils.py`
+
+-   `ensure_directory(directory: Path) -> Path`: Ensures a directory exists, creating it if necessary.
+-   `safe_copy_file(src: Path, dst: Path, preserve_metadata: bool = True) -> Path`: Safely copies a file, handling errors and ensuring the destination directory exists.
+-   `generate_output_filename(input_path: Path, output_format: str, suffix: str | None = None) -> str`: Generates a standardized output filename.
+-   `cleanup_temp_files(*paths: Path) -> None`: Cleans up temporary files and directories.
+-   `find_tool_path(tool_name: str) -> str | None`: Finds an external tool in the system's PATH.
+
+## `slug_utils.py`
+
+-   `generate_page_slug(content: str, max_length: int = 50) -> str`: Generates a URL-friendly slug from page content.
+-   `sanitize_file_slug(filename: str) -> str`: Sanitizes a filename for safe filesystem usage.
+
+## `validation.py`
+
+-   `validate_pdf_file(pdf_path: Path) -> None`: Validates that a PDF file is readable and not corrupted.
+-   `validate_output_directory(output_path: Path, create_if_missing: bool = True, min_free_space_mb: int = 50) -> None`: Validates the output directory and optionally creates it.
+-   `validate_formats(formats: list[str]) -> list[str]`: Validates and normalizes the list of output formats.
+
+</document_content>
+</document>
+
+<document index="11">
+<source>04-specification/00-introduction-and-architecture.md</source>
+<document_content>
+# Vexy PDF Werk (VPW) - Part 1: Planning and Architecture
+
+**Problem Analysis**: What exactly are we solving and why?
+
+We're creating a comprehensive PDF processing tool that transforms "vexing" PDFs into multiple high-quality, accessible formats. The core problems we're solving:
+
+1. **PDF/A Compliance**: Many PDFs aren't archival-quality or standardized
+2. **OCR Quality**: Scanned documents often have poor or missing text layers
+3. **Format Conversion**: Need to convert PDFs to modern formats (Markdown, ePub)
+4. **Metadata Management**: Extract and standardize bibliographic information
+5. **AI Enhancement**: Use LLMs to improve OCR accuracy and content extraction
+
+**Constraints**: What limitations must we respect?
+
+- Must use modern Python toolchain (hatch, ruff, uv, git-tag-based semver)
+- Must integrate with existing robust tools (qpdf, OCRmyPDF) rather than reinventing
+- Must support optional advanced features (Marker, AI services) without breaking core functionality
+- Must follow anti-enterprise bloat guidelines - keep it simple
+- Must work cross-platform with appropriate configuration directories
+
+**Solution Options**: What are 2-3 viable approaches with trade-offs?
+
+1. **Modular Pipeline Approach** (CHOSEN)
+   - Sequential processing stages: PDF enhancement → Markdown conversion → ePub creation → Metadata extraction
+   - Clean separation of concerns, easy testing, optional stages
+   - Trade-off: More complex than monolithic, but much more maintainable
+
+2. **Monolithic Processing**
+   - Single large function handling everything
+   - Simple but inflexible, hard to test, no optional features
+
+3. **Plugin Architecture**
+   - Extensible converter system
+   - Over-engineered for this use case, violates simplicity principles
+
+### 1.1. Project Scope (One Sentence)
+
+**VPW transforms PDF documents into PDF/A format, paginated Markdown, ePub, and bibliographic YAML through a configurable pipeline using proven external tools.**
+
+### 1.2. High-Level Architecture
+
+#### 1.2.1. Data Flow Pipeline
+
+```
+Input PDF → PDF Analysis → OCR Enhancement → PDF/A Creation → Content Extraction → Format Generation → Output Files
+                           ↓
+                    Optional AI Enhancement
+```
+
+#### 1.2.2. Core Components
+
+1. **PDF Processor** - Handles OCR, PDF/A conversion, quality enhancement
+2. **Content Extractors** - Multiple backends for PDF-to-Markdown conversion
+3. **Format Generators** - Creates ePub and metadata outputs
+4. **AI Integrations** - Optional LLM services for enhancement
+5. **CLI Interface** - Fire-based command-line tool
+6. **Configuration System** - TOML-based settings management
+
+</document_content>
+</document>
+
+<document index="12">
+<source>04-specification/01-technology-stack-and-configuration.md</source>
+<document_content>
+### Technology Stack Decisions
+
+##### Build and Development Tools
+- **hatch + hatch-vcs**: Modern Python project management with git-tag versioning
+- **uv**: Ultra-fast package management and virtual environments, and `uv run` 
+- **ruff**: High-performance linting and formatting
+- **Fire**: Automatic CLI generation from Python objects
+
+**Rationale**: This stack represents the current best practices in Python development, emphasizing speed, simplicity, and modern workflows.
+
+##### Core PDF Processing
+- **OCRmyPDF**: Battle-tested OCR and PDF/A conversion
+- **qpdf**: Low-level PDF manipulation and optimization
+- **pikepdf**: Python wrapper for qpdf functionality
+
+**Rationale**: These tools are industry-standard, well-maintained, and handle the complex edge cases of PDF processing.
+
+##### Content Conversion (Optional)
+- **Marker**: High-fidelity academic PDF conversion with deep learning
+- **MarkItDown**: Microsoft's lightweight document converter
+- **Docling**: IBM's advanced document understanding platform
+
+**Rationale**: Multiple backends provide flexibility - users can choose based on their needs and available resources.
+
+##### AI Integration (Optional)
+- **Claude CLI**: Direct command-line access to Anthropic's models
+- **Gemini CLI**: Google's AI model access
+- **Custom Python integrations**: Flexible API wrappers
+
+**Rationale**: CLI tools are simpler to integrate than API libraries, and optional nature ensures core functionality works without AI.
+
+#### Configuration Architecture
+
+##### Configuration Hierarchy
+1. **Command-line arguments** (highest priority)
+2. **Environment variables**
+3. **User config file** (`~/.config/vexy-pdf-werk/config.toml`)
+4. **Default values** (lowest priority)
+
+##### Configuration Categories
+```toml
+[processing]
+ocr_language = "eng"
+pdf_quality = "high"
+force_ocr = false
+
+[conversion]
+markdown_backend = "auto"  # auto, marker, markitdown, docling, basic
+paginate_markdown = true
+include_images = true
+
+[ai]
+enabled = false
+provider = "claude"  # claude, gemini, custom
+correction_enabled = false
+
+[output]
+formats = ["pdfa", "markdown", "epub", "yaml"]
+preserve_original = true
+output_directory = "./output"
+```
+
+</document_content>
+</document>
+
+<document index="13">
+<source>04-specification/02-integration-points-and-error-handling.md</source>
+<document_content>
+### Integration Points
+
+##### External Tool Dependencies
+- **System Requirements**: tesseract-ocr, qpdf, ghostscript
+- **Optional Requirements**: pandoc (for ePub), marker/markitdown/docling
+- **AI Services**: API keys for Claude/Gemini if using AI features
+
+##### File System Interactions
+- **Input**: Single PDF files or batch processing
+- **Temporary**: Isolated working directories for each job
+- **Output**: Organized directory structure with consistent naming
+- **Config**: Platform-appropriate configuration directories
+
+### Error Handling Philosophy
+
+##### Graceful Degradation
+- Core PDF/A conversion must always work
+- Optional features fail gracefully with clear messages
+- Fallback mechanisms for conversion backends
+- Clear error messages with suggested solutions
+
+##### Recovery Strategies
+- Retry mechanisms for network-dependent operations
+- Temporary file cleanup on failures
+- Validation checkpoints throughout pipeline
+- Detailed logging for debugging
+
+</document_content>
+</document>
+
+<document index="14">
+<source>04-specification/03-security-performance-and-quality.md</source>
+<document_content>
+### Security Considerations
+
+##### Input Validation
+- PDF structure validation before processing
+- Path traversal prevention
+- File size and type restrictions
+- Malformed PDF handling
+
+##### API Key Management
+- Environment variables for sensitive data
+- No hardcoded credentials
+- Optional secure config file storage
+- Clear separation of public/private settings
+
+### Performance and Resource Management
+
+#### Processing Efficiency
+- **Parallel Processing**: Multi-core utilization where possible
+- **Memory Management**: Streaming for large files, cleanup of temp files
+- **Caching**: Basic caching of heavy operations (model loading)
+- **Progress Reporting**: User feedback for long-running operations
+
+#### Scalability Considerations
+- **Batch Processing**: Handle multiple PDFs efficiently
+- **Resource Limits**: Configurable memory and CPU usage
+- **Async Operations**: Non-blocking network calls for AI services
+- **Interrupt Handling**: Clean shutdown and cleanup
+
+### Quality Assurance Strategy
+
+#### Code Quality
+- **Type Hints**: Full type annotation for maintainability
+- **Documentation**: Comprehensive docstrings and README
+- **Testing**: Unit tests for core functions, integration tests for pipeline
+- **Formatting**: Automated code formatting with ruff
+
+</document_content>
+</document>
+
+<document index="15">
+<source>04-specification/04-extensibility-and-success-criteria.md</source>
+<document_content>
+### Future Extensibility
+
+#### Plugin Architecture Preparation
+- Clean interfaces between components
+- Configurable backend selection
+- Easy addition of new conversion engines
+- Minimal coupling between optional features
+
+#### Enhancement Opportunities
+- Web interface for non-technical users
+- Database backend for document management
+- Integration with reference managers
+- Advanced document analysis features
+
+### Success Criteria
+
+#### Functional Requirements
+1. **PDF/A Conversion**: Reliably converts any valid PDF to PDF/A format
+2. **OCR Enhancement**: Adds searchable text layers to scanned documents
+3. **Format Generation**: Produces quality Markdown, ePub, and metadata files
+4. **AI Integration**: Optional LLM enhancement works when configured
+5. **Cross-Platform**: Runs on Linux, macOS, and Windows
+
+#### Quality Requirements
+1. **Reliability**: Handles malformed PDFs gracefully
+2. **Performance**: Processes typical documents in reasonable time
+3. **Usability**: Clear CLI with helpful error messages
+4. **Maintainability**: Clean, documented, testable code
+5. **Extensibility**: Easy to add new features and backends
+
+#### Deployment Requirements
+1. **Easy Installation**: Single command installation via pip
+2. **Clear Dependencies**: Well-documented system requirements
+3. **Configuration**: Simple setup for optional features
+4. **Documentation**: Comprehensive user and developer guides
+5. **Versioning**: Semantic versioning with git tags
+
+</document_content>
+</document>
+
+<document index="16">
+<source>05-development/00-contributing.md</source>
+<document_content>
+# Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1.  Fork the repository.
+2.  Create a feature branch (`git checkout -b feature/amazing-feature`).
+3.  Make your changes, following the code quality standards.
+4.  Run tests and linting to ensure everything is working correctly.
+5.  Commit your changes (`git commit -m 'Add amazing feature'`).
+6.  Push to the branch (`git push origin feature/amazing-feature`).
+7.  Open a Pull Request.
+
+</document_content>
+</document>
+
+<document index="17">
+<source>05-development/01-testing.md</source>
+<document_content>
+# Testing
+
+This project uses `pytest` for testing. To run the tests, use the following command:
+
+```bash
+hatch run test
+```
+
+This will run all the unit and integration tests.
+
+## Test Structure
+
+The tests are organized into two main directories:
+
+-   `tests/unit`: Unit tests for individual components.
+-   `tests/integration`: Integration tests for the complete pipeline and CLI.
+
+## Running Specific Tests
+
+You can run specific tests by passing arguments to `pytest`:
+
+```bash
+hatch run test -- tests/unit/test_config.py
+```
+
+## Coverage
+
+To generate a test coverage report, run:
+
+```bash
+hatch run test-cov
+```
+
+</document_content>
+</document>
+
+<document index="18">
+<source>05-development/02-release-process.md</source>
+<document_content>
+# Release Process
+
+This project uses a script to automate the release process. To create a new release, run the following command:
+
+```bash
+./scripts/release.sh <version>
+```
+
+For example:
+
+```bash
+./scripts/release.sh 1.2.0
+```
+
+This script will:
+
+1.  Run all quality checks and tests.
+2.  Build the package.
+3.  Create a git tag for the new version.
+4.  Push the changes and tag to the remote repository.
+5.  Publish the package to Test PyPI and then to PyPI.
+6.  Create a new release on GitHub.
+
+</document_content>
+</document>
+
+</documents>

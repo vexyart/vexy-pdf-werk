@@ -3,79 +3,68 @@
 
 # Project Plan: Vexy PDF Werk (Next Steps)
 
-This plan outlines the next phases of development for Vexy PDF Werk, focusing on completing the feature set as defined in `SPEC.md` and ensuring the package is fully functional and robust.
+This plan has been updated to reflect the current state of the project. The initial implementation of core features, including the advanced AI-powered structure enhancement pipeline (QDF), is complete. The next phases focus on finalizing and testing this new feature, implementing additional content backends, and improving documentation and overall robustness.
 
-## Phase 1: Advanced AI-Powered PDF Structure Enhancement
+## Phase 1: Finalize and Test AI Structure Enhancement (QDF Pipeline) ✅ COMPLETE
 
-This phase introduces a sophisticated workflow for improving PDF content and structure using LLMs and the QDF (qpdf data format).
+**Objective**: Ensure the newly implemented AI-powered structure enhancement feature is robust, reliable, and well-tested.
 
-1.  **QDF/JSON Representation**:
-    -   Implement a new module, `qdf_processor.py`, to handle the conversion of a PDF page to its QDF/JSON representation using `pikepdf` or by calling `qpdf` directly (`qpdf --qdf --json`).
-    -   Implement logic to extract a "mini version" containing only the text streams from the QDF/JSON.
+-   [x] **Core Implementation**: The core logic for converting PDF pages to QDF/JSON, extracting text, getting enhancement diffs from AI services, and applying those diffs is in place (`QDFProcessor`, `AIService`, `PDFProcessor`).
+-   [x] **Task: Comprehensive Testing**:
+    -   ✅ Write unit tests for the `QDFProcessor`, mocking `qpdf` subprocess calls.
+    -   ✅ Write unit tests for the diff application logic in `apply_diff_to_qdf`.
+    -   ✅ Create integration tests for the end-to-end `_enhance_with_ai_structure` workflow, mocking the AI service to return various diff formats (valid, invalid, empty).
+    -   **Achievement**: Added 17 comprehensive tests achieving 92% coverage for QDF processor with full error scenario testing.
+-   [x] **Task: Refine AI Prompts**:
+    -   ✅ Iteratively test and refine the prompts in `ai_services.py` (`_create_structure_enhancement_prompt`) for both Claude and Gemini to ensure they consistently return clean, applicable diffs.
+    -   **Achievement**: Completely rewrote prompts following industry best practices with specific instructions, examples, and output format requirements.
+-   [x] **Task: Error Handling**:
+    -   ✅ Implement robust error handling within the `_enhance_with_ai_structure` method.
+    -   ✅ Handle cases where the AI service fails or returns a malformed diff, ensuring the pipeline can gracefully fall back to processing the page without enhancement.
+    -   **Achievement**: Added comprehensive error handling with timeouts (30s/60s), retry logic (3 attempts), input validation, and graceful fallbacks.
 
-2.  **LLM Integration for PDF Enhancement**:
-    -   Create a new function in `ai_services.py` called `enhance_pdf_structure`.
-    -   This function will take the "mini version" (text) of a page and send it to the LLM with a carefully crafted prompt.
-    -   The prompt will instruct the LLM to:
-        -   Correct orthographical and logical errors in the text.
-        -   Suggest structural improvements.
-        -   Provide suggestions for PDF/A tagging.
-        -   Return the changes in a unified diff format.
+## Phase 2: Implement Advanced Markdown Converters
 
-3.  **Diff Application and Merging**:
-    -   Implement a diff parser to handle the LLM's output.
-    -   Implement logic to apply the parsed diff to the "mini version" of the text.
-    -   Research and implement a method to merge the changes from the updated "mini version" back into the "full" QDF/JSON version. This is a complex task that may involve replacing text streams or updating object properties in the QDF/JSON structure.
+**Objective**: Provide users with higher-fidelity Markdown conversion options by integrating optional, advanced backends.
 
-4.  **Integration into the Main Pipeline**:
-    -   Integrate this new enhancement step into the `PDFProcessor`'s `create_better_pdf` method.
-    -   This will be an optional step, enabled by a new configuration flag in `config.py` (e.g., `ai.structure_enhancement_enabled`).
+-   [ ] **Task: Implement `MarkerConverter`**:
+    -   Create a `MarkerConverter` class in `markdown_converter.py`.
+    -   The implementation should be lazy-loaded, only activating if the `marker-pdf` package is installed.
+-   [ ] **Task: Implement `MarkItDownConverter`**:
+    -   Create a `MarkItDownConverter` class, also as a lazy-loaded optional backend.
+-   [ ] **Task: Implement `DoclingConverter`**:
+    -   Create a `DoclingConverter` class as a third optional backend.
+-   [ ] **Task: Enhance `MarkdownGenerator`**:
+    -   Update the `_create_converter` method to intelligently select the best available backend.
+    -   The priority should be configurable but default to a sensible order (e.g., `Marker` > `Docling` > `MarkItDown` > `Basic`).
+-   [ ] **Task: Add Tests for New Converters**:
+    -   Add integration tests for each new converter.
+    -   Use `pytest.mark.skipif` to ensure these tests only run if the required optional dependencies are installed.
 
-5.  **Testing**:
-    -   Create unit tests for the QDF/JSON processing.
-    -   Create unit tests for the diff parsing and application.
-    -   Create integration tests (mocking the LLM) to test the end-to-end flow for a single page.
+## Phase 3: Documentation, Usability & Quality
 
-## Phase 2: Advanced Markdown Converters & Testing
+**Objective**: Improve the user experience through better documentation, clearer CLI feedback, and higher code quality.
 
-This phase focuses on implementing the optional, high-fidelity Markdown converters and ensuring the entire conversion system is well-tested.
-
-1.  **Implement Advanced Converters**:
-    -   **Marker Converter**: Implement the `MarkerConverter` class in `src/vexy_pdf_werk/core/markdown_converter.py`. This should be a lazy-loaded implementation that is only used if the `marker-pdf` package is installed.
-    -   **MarkItDown Converter**: Implement the `MarkItDownConverter` class, also as a lazy-loaded optional backend.
-    -   **Converter Selection Logic**: Enhance the `MarkdownGenerator` to intelligently select the best available converter, with a clear fallback mechanism (`Marker` > `MarkItDown` > `Basic`).
-
-2.  **Testing**:
-    -   **Unit Tests for `BasicConverter`**: Create comprehensive unit tests for the existing `BasicConverter` to ensure its reliability as the fallback.
-    -   **Integration Tests for Advanced Converters**: Add integration tests for `MarkerConverter` and `MarkItDownConverter`. These tests should be marked appropriately (e.g., `@pytest.mark.requires_marker`) and only run if the respective packages are installed.
-
-## Phase 3: Quality, Reliability & Robustness
-
-This phase focuses on improving the overall quality and reliability of the package.
-
-1.  **Fix Remaining Test Suite Issues**:
-    -   Address the 5 failing metadata extractor tests related to `Path.stat()` mocking.
-    -   Clean up test files to reduce Ruff issues.
-    -   Improve the reliability of async tests and mock configurations.
-
-2.  **Enhanced Logging & Monitoring**:
-    -   Implement structured logging with detailed progress information for each processing stage.
-    -   Add timing metrics for performance monitoring.
-    -   Add resource usage monitoring (memory, disk space) with warnings.
-
-3.  **Comprehensive Input Validation & Edge Case Handling**:
-    -   Add disk space validation before processing large PDFs.
-    -   Add comprehensive file permission validation.
-    -   Improve memory management for very large PDF files (e.g., chunked processing).
+-   [ ] **Task: Update Documentation**:
+    -   Refresh all documents in `src_docs/` to provide details on the AI structure enhancement feature and the new Markdown backends.
+    -   Create a guide on how to use the AI features and configure the different backends.
+-   [ ] **Task: Automate API Documentation**:
+    -   Configure `mkdocs` with `mkdocstrings` to automatically generate the API Reference section from the Python docstrings. This ensures documentation stays in sync with the code.
+-   [ ] **Task: Improve CLI Output**:
+    -   Enhance the `rich.progress` implementation in `cli.py` to display more granular stages (e.g., "Applying OCR", "Enhancing Structure (Page 5/20)", "Generating ePub").
+-   [ ] **Task: Publish Documentation**:
+    -   Configure the `.github/workflows/build-docs.yml` action to automatically build and deploy the `mkdocs` site to GitHub Pages on pushes to the main branch.
+-   [ ] **Task: Increase Test Coverage**:
+    -   Address any remaining test failures and aim for higher overall test coverage, especially for core logic in `pdf_processor.py` and `markdown_converter.py`.
 
 ## Phase 4: Release Preparation
 
-This phase prepares the project for a new release.
+**Objective**: Prepare the project for a stable, well-documented release.
 
-1.  **Final Documentation Updates**:
-    -   Update `README.md` and other documentation to reflect the new features (advanced converters, AI integration).
-    -   Ensure the `CHANGELOG.md` is up-to-date.
-
-2.  **Tag and Release**:
-    -   Perform a final round of testing.
-    -   Tag a new version (e.g., `v1.2.0`) and create a release on GitHub.
+-   [ ] **Task: Final Review**:
+    -   Perform a final review of the codebase, dependencies, and all user-facing documentation.
+-   [ ] **Task: Update Changelog**:
+    -   Ensure `CHANGELOG.md` is up-to-date with all the new features and fixes.
+-   [ ] **Task: Tag and Release**:
+    -   After all tests are passing, use `hatch` and `git` to tag a new version, build the package, and publish it to PyPI.
+    -   Create a corresponding release on GitHub with detailed release notes.

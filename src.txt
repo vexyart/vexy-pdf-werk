@@ -1,0 +1,749 @@
+Project Structure:
+📁 src
+└── 📁 vexy_pdf_werk
+    ├── 📁 core
+    │   ├── 📄 __init__.py
+    │   ├── 📄 epub_creator.py
+    │   ├── 📄 markdown_converter.py
+    │   ├── 📄 metadata_extractor.py
+    │   ├── 📄 pdf_processor.py
+    │   └── 📄 qdf_processor.py
+    ├── 📁 integrations
+    │   ├── 📄 __init__.py
+    │   └── 📄 ai_services.py
+    ├── 📁 utils
+    │   ├── 📄 __init__.py
+    │   ├── 📄 file_utils.py
+    │   ├── 📄 slug_utils.py
+    │   └── 📄 validation.py
+    ├── 📄 __init__.py
+    ├── 📄 _version.py
+    ├── 📄 cli.py
+    ├── 📄 config.py
+    ├── 📄 py.typed
+    └── 📄 vexy_pdf_werk.py
+
+
+<documents>
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/__init__.py
+# Language: python
+
+from vexy_pdf_werk._version import __version__, __version_tuple__
+from vexy_pdf_werk.vexy_pdf_werk import Config, main, process_data
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/_version.py
+# Language: python
+
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/cli.py
+# Language: python
+
+import asyncio
+import sys
+import time
+import traceback
+from pathlib import Path
+import fire
+from loguru import logger
+from rich.console import Console
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from vexy_pdf_werk import __version__
+from vexy_pdf_werk.config import VPWConfig, create_default_config, get_config_file, load_config
+from vexy_pdf_werk.core.epub_creator import EpubCreator
+from vexy_pdf_werk.core.markdown_converter import MarkdownGenerator
+from vexy_pdf_werk.core.metadata_extractor import MetadataExtractor
+from vexy_pdf_werk.core.pdf_processor import PDFProcessor
+from vexy_pdf_werk.utils.validation import validate_formats, validate_output_directory, validate_pdf_file
+
+class VexyPDFWerk:
+    """Vexy PDF Werk - Transform PDFs into better formats."""
+    def __init__((self)) -> None:
+        """Initialize the VPW CLI."""
+    def process((
+        self,
+        pdf_path: str,
+        output_dir: str | None = None,
+        formats: str | list[str] | tuple[str, ...] = "pdfa,markdown,epub,yaml",
+        verbose: bool = False,  # noqa: FBT001, FBT002
+        config_file: str | None = None,
+    )) -> int:
+        """ Process a PDF file through the complete VPW pipeline...."""
+    def _run_processing_pipeline((
+        self,
+        input_path: Path,
+        output_path: Path,
+        requested_formats: list[str],
+        config: VPWConfig,
+    )) -> int:
+        """Run the complete PDF processing pipeline."""
+    def config((self, show: bool = False, init: bool = False)) -> int | None:
+        """ Manage VPW configuration...."""
+    def version((self)) -> None:
+        """Display version information."""
+
+def __init__((self)) -> None:
+    """Initialize the VPW CLI."""
+
+def process((
+        self,
+        pdf_path: str,
+        output_dir: str | None = None,
+        formats: str | list[str] | tuple[str, ...] = "pdfa,markdown,epub,yaml",
+        verbose: bool = False,  # noqa: FBT001, FBT002
+        config_file: str | None = None,
+    )) -> int:
+    """ Process a PDF file through the complete VPW pipeline...."""
+
+def _run_processing_pipeline((
+        self,
+        input_path: Path,
+        output_path: Path,
+        requested_formats: list[str],
+        config: VPWConfig,
+    )) -> int:
+    """Run the complete PDF processing pipeline."""
+
+def config((self, show: bool = False, init: bool = False)) -> int | None:
+    """ Manage VPW configuration...."""
+
+def version((self)) -> None:
+    """Display version information."""
+
+def main(()) -> None:
+    """Main entry point for the CLI."""
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/config.py
+# Language: python
+
+import os
+from pathlib import Path
+from typing import Any
+import toml
+from platformdirs import user_config_dir
+from pydantic import BaseModel, Field
+
+class ProcessingConfig(B, a, s, e, M, o, d, e, l):
+    """PDF processing configuration."""
+
+class ConversionConfig(B, a, s, e, M, o, d, e, l):
+    """Content conversion configuration."""
+
+class AIConfig(B, a, s, e, M, o, d, e, l):
+    """AI integration configuration."""
+
+class OutputConfig(B, a, s, e, M, o, d, e, l):
+    """Output configuration."""
+
+class VPWConfig(B, a, s, e, M, o, d, e, l):
+    """Main configuration model."""
+
+def get_config_dir(()) -> Path:
+    """Get the user configuration directory."""
+
+def get_config_file(()) -> Path:
+    """Get the path to the main configuration file."""
+
+def load_config((config_file: Path | None = None)) -> VPWConfig:
+    """ Load configuration from file and environment variables...."""
+
+def save_config((config: VPWConfig, config_file: Path | None = None)) -> None:
+    """ Save configuration to file with enhanced error handling...."""
+
+def create_default_config(()) -> VPWConfig:
+    """ Create and save a default configuration file...."""
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/core/__init__.py
+# Language: python
+
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/core/epub_creator.py
+# Language: python
+
+import asyncio
+import uuid
+from dataclasses import dataclass
+from pathlib import Path
+from ebooklib import epub
+from loguru import logger
+from vexy_pdf_werk.core.markdown_converter import MarkdownPage, MarkdownResult
+
+class EpubCreationResult:
+    """Result of ePub creation."""
+
+class EpubCreator:
+    """Creates ePub files from Markdown content."""
+    def __init__((self, book_title: str | None = None, author: str | None = None)):
+        """ Initialize the ePub creator...."""
+    def create_epub((
+        self,
+        markdown_result: MarkdownResult,
+        output_path: Path,
+        source_pdf_path: Path | None = None
+    )) -> EpubCreationResult:
+        """ Create an ePub file from markdown content...."""
+    def _determine_book_title((
+        self,
+        markdown_result: MarkdownResult,
+        source_pdf_path: Path | None
+    )) -> str:
+        """Determine the best title for the book."""
+    def _create_chapter_from_page((self, page: MarkdownPage)) -> epub.EpubHtml:
+        """ Create an ePub chapter from a markdown page...."""
+    def _markdown_to_html((self, markdown_content: str, title: str | None = None)) -> str:
+        """ Convert markdown content to HTML...."""
+
+def __init__((self, book_title: str | None = None, author: str | None = None)):
+    """ Initialize the ePub creator...."""
+
+def create_epub((
+        self,
+        markdown_result: MarkdownResult,
+        output_path: Path,
+        source_pdf_path: Path | None = None
+    )) -> EpubCreationResult:
+    """ Create an ePub file from markdown content...."""
+
+def _determine_book_title((
+        self,
+        markdown_result: MarkdownResult,
+        source_pdf_path: Path | None
+    )) -> str:
+    """Determine the best title for the book."""
+
+def _create_chapter_from_page((self, page: MarkdownPage)) -> epub.EpubHtml:
+    """ Create an ePub chapter from a markdown page...."""
+
+def _markdown_to_html((self, markdown_content: str, title: str | None = None)) -> str:
+    """ Convert markdown content to HTML...."""
+
+def create_epub_from_markdown((
+    markdown_result: MarkdownResult,
+    output_path: Path,
+    book_title: str | None = None,
+    author: str | None = None,
+    source_pdf_path: Path | None = None
+)) -> EpubCreationResult:
+    """ Convenience function to create ePub from markdown result...."""
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/core/markdown_converter.py
+# Language: python
+
+import asyncio
+import re
+from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from pathlib import Path
+import aiofiles
+import pypdf
+from loguru import logger
+from vexy_pdf_werk.config import ConversionConfig
+from vexy_pdf_werk.utils.slug_utils import generate_page_slug, sanitize_file_slug
+
+class MarkdownPage:
+    """Represents a single page converted to markdown."""
+
+class MarkdownResult:
+    """Result of markdown conversion."""
+
+class MarkdownConverter(A, B, C):
+    """Abstract base class for PDF to Markdown converters."""
+    def __init__((self, config: ConversionConfig)):
+        """Initialize the converter."""
+    def _generate_page_filename((self, page_number: int, content: str, total_pages: int)) -> str:
+        """ Generate a filename for a markdown page...."""
+
+class BasicConverter(M, a, r, k, d, o, w, n, C, o, n, v, e, r, t, e, r):
+    """Basic PDF to Markdown converter using PyPDF."""
+    def convert_pdf((self, pdf_path: Path)) -> MarkdownResult:
+        """ Convert PDF to markdown using PyPDF extraction...."""
+    def _read_pdf_sync((self, pdf_path: Path)) -> pypdf.PdfReader:
+        """Synchronous PDF reading for use in thread executor."""
+    def _clean_extracted_text((self, text: str)) -> str:
+        """ Clean and format extracted text for markdown output...."""
+    def _improve_line_formatting((self, line: str)) -> str:
+        """ Apply basic formatting improvements to a line of text...."""
+    def _looks_like_header((self, line: str)) -> bool:
+        """ Determine if a line looks like a section header using heuristic analysis...."""
+    def _extract_page_title((self, content: str)) -> str | None:
+        """ Extract a title from page content...."""
+
+class MarkdownGenerator:
+    """Manages markdown generation from PDFs."""
+    def __init__((self, config: ConversionConfig)):
+        """Initialize the generator."""
+    def _create_converter((self)) -> MarkdownConverter:
+        """Create appropriate converter based on configuration."""
+    def generate_markdown((self, pdf_path: Path, output_dir: Path)) -> MarkdownResult:
+        """ Generate markdown files from PDF...."""
+    def _write_paginated_files((self, pages: list[MarkdownPage], output_dir: Path)) -> None:
+        """Write separate markdown file for each page."""
+    def _write_single_file((self, pages: list[MarkdownPage], output_dir: Path, base_name: str)) -> None:
+        """Write all pages to a single markdown file."""
+    def _create_frontmatter((self, page: MarkdownPage, total_pages: int)) -> str:
+        """Create YAML frontmatter for a markdown page."""
+
+def __init__((self, config: ConversionConfig)):
+    """Initialize the converter."""
+
+def convert_pdf((self, pdf_path: Path)) -> MarkdownResult:
+    """ Convert PDF to markdown pages...."""
+
+def _generate_page_filename((self, page_number: int, content: str, total_pages: int)) -> str:
+    """ Generate a filename for a markdown page...."""
+
+def convert_pdf((self, pdf_path: Path)) -> MarkdownResult:
+    """ Convert PDF to markdown using PyPDF extraction...."""
+
+def _read_pdf_sync((self, pdf_path: Path)) -> pypdf.PdfReader:
+    """Synchronous PDF reading for use in thread executor."""
+
+def _clean_extracted_text((self, text: str)) -> str:
+    """ Clean and format extracted text for markdown output...."""
+
+def _improve_line_formatting((self, line: str)) -> str:
+    """ Apply basic formatting improvements to a line of text...."""
+
+def _looks_like_header((self, line: str)) -> bool:
+    """ Determine if a line looks like a section header using heuristic analysis...."""
+
+def _extract_page_title((self, content: str)) -> str | None:
+    """ Extract a title from page content...."""
+
+def __init__((self, config: ConversionConfig)):
+    """Initialize the generator."""
+
+def _create_converter((self)) -> MarkdownConverter:
+    """Create appropriate converter based on configuration."""
+
+def generate_markdown((self, pdf_path: Path, output_dir: Path)) -> MarkdownResult:
+    """ Generate markdown files from PDF...."""
+
+def _write_paginated_files((self, pages: list[MarkdownPage], output_dir: Path)) -> None:
+    """Write separate markdown file for each page."""
+
+def _write_single_file((self, pages: list[MarkdownPage], output_dir: Path, base_name: str)) -> None:
+    """Write all pages to a single markdown file."""
+
+def _create_frontmatter((self, page: MarkdownPage, total_pages: int)) -> str:
+    """Create YAML frontmatter for a markdown page."""
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/core/metadata_extractor.py
+# Language: python
+
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+import yaml
+from loguru import logger
+from vexy_pdf_werk.core.markdown_converter import MarkdownResult
+from vexy_pdf_werk.core.pdf_processor import PDFInfo
+
+class DocumentMetadata:
+    """Complete metadata for a processed document."""
+    def __post_init__((self)) -> None:
+        """Initialize mutable defaults."""
+
+class MetadataExtractor:
+    """Extracts and generates metadata for processed documents."""
+    def __init__((self)) -> None:
+        """Initialize the metadata extractor."""
+    def extract_metadata((
+        self,
+        pdf_path: Path,
+        pdf_info: PDFInfo,
+        markdown_result: MarkdownResult | None = None,
+        formats_generated: list[str] | None = None,
+        processing_time: float = 0.0
+    )) -> DocumentMetadata:
+        """ Extract comprehensive metadata from processed document...."""
+    def save_metadata_yaml((self, metadata: DocumentMetadata, output_path: Path)) -> None:
+        """ Save metadata to YAML file...."""
+    def _calculate_word_count((self, markdown_result: MarkdownResult)) -> int:
+        """ Calculate estimated word count from markdown content...."""
+    def _get_first_page_preview((self, markdown_result: MarkdownResult)) -> str | None:
+        """ Extract a preview from the first page content...."""
+    def _clean_metadata_dict((self, metadata_dict: dict[str, Any])) -> dict[str, Any]:
+        """ Clean up metadata dictionary by removing None values and organizing structure...."""
+
+def __post_init__((self)) -> None:
+    """Initialize mutable defaults."""
+
+def __init__((self)) -> None:
+    """Initialize the metadata extractor."""
+
+def extract_metadata((
+        self,
+        pdf_path: Path,
+        pdf_info: PDFInfo,
+        markdown_result: MarkdownResult | None = None,
+        formats_generated: list[str] | None = None,
+        processing_time: float = 0.0
+    )) -> DocumentMetadata:
+    """ Extract comprehensive metadata from processed document...."""
+
+def save_metadata_yaml((self, metadata: DocumentMetadata, output_path: Path)) -> None:
+    """ Save metadata to YAML file...."""
+
+def _calculate_word_count((self, markdown_result: MarkdownResult)) -> int:
+    """ Calculate estimated word count from markdown content...."""
+
+def _get_first_page_preview((self, markdown_result: MarkdownResult)) -> str | None:
+    """ Extract a preview from the first page content...."""
+
+def _clean_metadata_dict((self, metadata_dict: dict[str, Any])) -> dict[str, Any]:
+    """ Clean up metadata dictionary by removing None values and organizing structure...."""
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/core/pdf_processor.py
+# Language: python
+
+import asyncio
+import shutil
+import tempfile
+import time
+from dataclasses import dataclass
+from pathlib import Path
+import pikepdf
+from loguru import logger
+from rich.progress import Progress, TaskID
+from vexy_pdf_werk.config import VPWConfig
+from vexy_pdf_werk.utils.file_utils import find_tool_path
+from vexy_pdf_werk.utils.validation import validate_pdf_file
+from vexy_pdf_werk.integrations.ai_services import AIServiceFactory
+from .qdf_processor import QDFProcessor
+import pikepdf
+
+class PDFInfo:
+    """Information about a PDF file."""
+
+class ProcessingResult:
+    """Result of PDF processing."""
+
+class PDFProcessor:
+    """ Handles PDF processing, analysis, and quality enhancement...."""
+    def __init__((self, config: VPWConfig)):
+        """ Initialize the PDF processor with configuration and tool discovery...."""
+    def _find_tool((self, tool_name: str)) -> str:
+        """Find external tool in PATH."""
+    def analyze_pdf((self, pdf_path: Path)) -> PDFInfo:
+        """ Analyze PDF structure and content...."""
+    def create_better_pdf((
+        self,
+        pdf_path: Path,
+        output_path: Path,
+        progress: Progress | None = None,
+        task_id: TaskID | None = None
+    )) -> ProcessingResult:
+        """ Create an enhanced PDF/A version with OCR...."""
+    def _enhance_with_ocr((
+        self,
+        input_pdf: Path,
+        output_pdf: Path,
+        pdf_info: PDFInfo
+    )) -> None:
+        """Enhance PDF with OCR using OCRmyPDF."""
+    def _enhance_with_ai((self, input_pdf: Path, output_pdf: Path)) -> None:
+        """Enhance PDF text using AI correction."""
+    def _enhance_with_ai_structure((self, pdf_path: Path, output_path: Path)):
+        """Enhances the PDF structure page by page using AI and QDF."""
+    def _convert_to_pdfa((
+        self,
+        input_pdf: Path,
+        output_pdf: Path,
+        pdf_info: PDFInfo  # noqa: ARG002
+    )) -> None:
+        """Convert PDF to PDF/A format using qpdf for final optimization."""
+
+def __init__((self, config: VPWConfig)):
+    """ Initialize the PDF processor with configuration and tool discovery...."""
+
+def _find_tool((self, tool_name: str)) -> str:
+    """Find external tool in PATH."""
+
+def analyze_pdf((self, pdf_path: Path)) -> PDFInfo:
+    """ Analyze PDF structure and content...."""
+
+def create_better_pdf((
+        self,
+        pdf_path: Path,
+        output_path: Path,
+        progress: Progress | None = None,
+        task_id: TaskID | None = None
+    )) -> ProcessingResult:
+    """ Create an enhanced PDF/A version with OCR...."""
+
+def _enhance_with_ocr((
+        self,
+        input_pdf: Path,
+        output_pdf: Path,
+        pdf_info: PDFInfo
+    )) -> None:
+    """Enhance PDF with OCR using OCRmyPDF."""
+
+def _enhance_with_ai((self, input_pdf: Path, output_pdf: Path)) -> None:
+    """Enhance PDF text using AI correction."""
+
+def _enhance_with_ai_structure((self, pdf_path: Path, output_path: Path)):
+    """Enhances the PDF structure page by page using AI and QDF."""
+
+def _convert_to_pdfa((
+        self,
+        input_pdf: Path,
+        output_pdf: Path,
+        pdf_info: PDFInfo  # noqa: ARG002
+    )) -> None:
+    """Convert PDF to PDF/A format using qpdf for final optimization."""
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/core/qdf_processor.py
+# Language: python
+
+import asyncio
+import json
+from pathlib import Path
+from typing import Any, Dict, List
+from loguru import logger
+
+class QDFProcessor:
+    """Handles the conversion of PDF pages to and from QDF/JSON format."""
+    def __init__((self, qpdf_cmd: str)):
+    def pdf_to_qdf_json((self, pdf_path: Path, page_num: int)) -> Dict[str, Any]:
+        """Converts a single PDF page to its QDF/JSON representation."""
+    def extract_text_from_qdf((self, qdf_json: Dict[str, Any])) -> str:
+        """Extracts only the text streams from a QDF/JSON object."""
+    def apply_diff_to_qdf((self, qdf_json: Dict[str, Any], diff: str)) -> Dict[str, Any]:
+        """Applies a diff to the QDF/JSON object to update text streams."""
+    def qdf_json_to_pdf((self, qdf_json: Dict[str, Any], output_path: Path)):
+        """Converts a QDF/JSON object back to a PDF file."""
+
+def __init__((self, qpdf_cmd: str)):
+
+def pdf_to_qdf_json((self, pdf_path: Path, page_num: int)) -> Dict[str, Any]:
+    """Converts a single PDF page to its QDF/JSON representation."""
+
+def extract_text_from_qdf((self, qdf_json: Dict[str, Any])) -> str:
+    """Extracts only the text streams from a QDF/JSON object."""
+
+def apply_diff_to_qdf((self, qdf_json: Dict[str, Any], diff: str)) -> Dict[str, Any]:
+    """Applies a diff to the QDF/JSON object to update text streams."""
+
+def qdf_json_to_pdf((self, qdf_json: Dict[str, Any], output_path: Path)):
+    """Converts a QDF/JSON object back to a PDF file."""
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/integrations/__init__.py
+# Language: python
+
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/integrations/ai_services.py
+# Language: python
+
+import asyncio
+import subprocess
+from abc import ABC, abstractmethod
+from typing import Optional, Dict, Any
+from pathlib import Path
+from loguru import logger
+from ..config import AIConfig
+from ..config import AIConfig
+
+class AIService(A, B, C):
+    """Abstract base class for AI services."""
+
+class ClaudeCLIService(A, I, S, e, r, v, i, c, e):
+    """Claude CLI service integration."""
+    def __init__((self, config: AIConfig)):
+        """Initialize Claude service."""
+    def correct_text((self, text: str, context: str = "")) -> str:
+        """Correct OCR errors using Claude CLI."""
+    def enhance_content((self, text: str, document_type: str = "general")) -> str:
+        """Enhance content structure using Claude."""
+    def _create_correction_prompt((self, text: str, context: str)) -> str:
+        """Create prompt for OCR correction."""
+    def _create_enhancement_prompt((self, text: str, document_type: str)) -> str:
+        """Create prompt for content enhancement."""
+    def _call_claude((self, prompt: str, fallback: str)) -> str:
+        """Generic Claude CLI call with fallback."""
+    def is_available((self)) -> bool:
+        """Check if Claude CLI is available."""
+    def enhance_pdf_structure((self, text_content: str)) -> str:
+        """Enhances PDF structure using Claude and returns a diff."""
+    def _create_structure_enhancement_prompt((self, text_content: str)) -> str:
+
+class GeminiCLIService(A, I, S, e, r, v, i, c, e):
+    """Gemini CLI service integration."""
+    def __init__((self, config: AIConfig)):
+        """Initialize Gemini service."""
+    def correct_text((self, text: str, context: str = "")) -> str:
+        """Correct OCR errors using Gemini CLI."""
+    def enhance_content((self, text: str, document_type: str = "general")) -> str:
+        """Enhance content using Gemini."""
+    def _create_correction_prompt((self, text: str, context: str)) -> str:
+        """Create OCR correction prompt for Gemini."""
+    def is_available((self)) -> bool:
+        """Check if Gemini CLI is available."""
+    def enhance_pdf_structure((self, text_content: str)) -> str:
+        """Enhances PDF structure using Gemini and returns a diff."""
+    def _create_structure_enhancement_prompt((self, text_content: str)) -> str:
+
+class AIServiceFactory:
+    """Factory for creating AI services."""
+
+def correct_text((self, text: str, context: str = "")) -> str:
+    """Correct OCR errors in text."""
+
+def enhance_content((self, text: str, document_type: str = "general")) -> str:
+    """Enhance content structure and formatting."""
+
+def is_available((self)) -> bool:
+    """Check if the AI service is available."""
+
+def enhance_pdf_structure((self, text_content: str)) -> str:
+    """Enhances PDF structure and returns a diff."""
+
+def __init__((self, config: AIConfig)):
+    """Initialize Claude service."""
+
+def correct_text((self, text: str, context: str = "")) -> str:
+    """Correct OCR errors using Claude CLI."""
+
+def enhance_content((self, text: str, document_type: str = "general")) -> str:
+    """Enhance content structure using Claude."""
+
+def _create_correction_prompt((self, text: str, context: str)) -> str:
+    """Create prompt for OCR correction."""
+
+def _create_enhancement_prompt((self, text: str, document_type: str)) -> str:
+    """Create prompt for content enhancement."""
+
+def _call_claude((self, prompt: str, fallback: str)) -> str:
+    """Generic Claude CLI call with fallback."""
+
+def is_available((self)) -> bool:
+    """Check if Claude CLI is available."""
+
+def enhance_pdf_structure((self, text_content: str)) -> str:
+    """Enhances PDF structure using Claude and returns a diff."""
+
+def _create_structure_enhancement_prompt((self, text_content: str)) -> str:
+
+def __init__((self, config: AIConfig)):
+    """Initialize Gemini service."""
+
+def correct_text((self, text: str, context: str = "")) -> str:
+    """Correct OCR errors using Gemini CLI."""
+
+def enhance_content((self, text: str, document_type: str = "general")) -> str:
+    """Enhance content using Gemini."""
+
+def _create_correction_prompt((self, text: str, context: str)) -> str:
+    """Create OCR correction prompt for Gemini."""
+
+def is_available((self)) -> bool:
+    """Check if Gemini CLI is available."""
+
+def enhance_pdf_structure((self, text_content: str)) -> str:
+    """Enhances PDF structure using Gemini and returns a diff."""
+
+def _create_structure_enhancement_prompt((self, text_content: str)) -> str:
+
+def create_service((config: AIConfig)) -> Optional[AIService]:
+    """Create AI service based on configuration."""
+
+def list_available_services(()) -> Dict[str, bool]:
+    """List all AI services and their availability."""
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/utils/__init__.py
+# Language: python
+
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/utils/file_utils.py
+# Language: python
+
+import shutil
+from pathlib import Path
+from loguru import logger
+
+def ensure_directory((directory: Path)) -> Path:
+    """ Ensure a directory exists, creating it if necessary...."""
+
+def safe_copy_file((src: Path, dst: Path, preserve_metadata: bool = True)) -> Path:
+    """ Safely copy a file, handling errors and ensuring destination directory exists...."""
+
+def generate_output_filename((
+    input_path: Path,
+    output_format: str,
+    suffix: str | None = None
+)) -> str:
+    """ Generate standardized output filename...."""
+
+def cleanup_temp_files((*paths: Path)) -> None:
+    """ Clean up temporary files and directories...."""
+
+def find_tool_path((tool_name: str)) -> str | None:
+    """ Find external tool in PATH...."""
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/utils/slug_utils.py
+# Language: python
+
+import re
+from pathvalidate import sanitize_filename
+from slugify import slugify
+
+def generate_page_slug((content: str, max_length: int = 50)) -> str:
+    """ Generate a URL-friendly slug from page content using intelligent text extraction...."""
+
+def sanitize_file_slug((filename: str)) -> str:
+    """ Sanitize a filename for safe filesystem usage...."""
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/utils/validation.py
+# Language: python
+
+import shutil
+from pathlib import Path
+import pikepdf
+from loguru import logger
+
+def validate_pdf_file((pdf_path: Path)) -> None:
+    """ Validate that a PDF file is readable and not corrupted...."""
+
+def validate_output_directory((output_path: Path, create_if_missing: bool = True,
+                             min_free_space_mb: int = 50)) -> None:
+    """ Validate output directory and optionally create it...."""
+
+def validate_formats((formats: list[str])) -> list[str]:
+    """ Validate and normalize output format list...."""
+
+
+# File: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/src/vexy_pdf_werk/vexy_pdf_werk.py
+# Language: python
+
+import logging
+from dataclasses import dataclass
+from typing import Any
+
+class Config:
+    """Configuration settings for vexy_pdf_werk."""
+
+def process_data((data: list[Any], config: Config | None = None, *, debug: bool = False)) -> dict[str, Any]:
+    """Process the input data according to configuration."""
+
+def main(()) -> None:
+    """ Main entry point for vexy_pdf_werk legacy interface...."""
+
+
+</documents>

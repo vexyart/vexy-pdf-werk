@@ -1,0 +1,293 @@
+#!/usr/bin/env python3
+# this_file: examples/python_examples/custom_config.py
+"""
+Custom configuration example for Vexy PDF Werk Python API.
+
+This script demonstrates how to customize the processing pipeline
+with different configuration options.
+"""
+
+import sys
+from pathlib import Path
+
+# Add the parent directory to path for importing
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+
+from vexy_pdf_werk.core.pdf_processor import PDFProcessor
+from vexy_pdf_werk.core.markdown_converter import MarkdownGenerator, BasicConverter
+from vexy_pdf_werk.core.epub_creator import EpubCreator
+from vexy_pdf_werk.core.metadata_extractor import MetadataExtractor
+from vexy_pdf_werk.config import Config
+
+
+def demonstrate_basic_config():
+    """Demonstrate basic configuration options."""
+    print("🔧 Basic Configuration Example")
+    print("-" * 40)
+
+    # Create a basic configuration
+    config = Config(
+        name="basic_demo",
+        value={
+            "processing": {
+                "ocr_language": "eng",
+                "pdf_quality": "high",
+                "force_ocr": False
+            },
+            "conversion": {
+                "markdown_backend": "basic",
+                "paginate_markdown": True,
+                "include_images": True
+            },
+            "output": {
+                "formats": ["markdown", "epub", "yaml"],
+                "preserve_original": True,
+                "output_directory": "./output"
+            }
+        }
+    )
+
+    print(f"Configuration name: {config.name}")
+    print(f"OCR language: {config.value['processing']['ocr_language']}")
+    print(f"Output formats: {config.value['output']['formats']}")
+    print(f"Include images: {config.value['conversion']['include_images']}")
+
+    return config
+
+
+def demonstrate_advanced_config():
+    """Demonstrate advanced configuration with custom settings."""
+    print("\n🔧 Advanced Configuration Example")
+    print("-" * 40)
+
+    # Create an advanced configuration
+    config = Config(
+        name="advanced_demo",
+        value={
+            "processing": {
+                "ocr_language": "eng+fra",  # Multi-language OCR
+                "pdf_quality": "maximum",
+                "force_ocr": True,
+                "timeout_seconds": 300
+            },
+            "conversion": {
+                "markdown_backend": "auto",  # Auto-select best converter
+                "paginate_markdown": True,
+                "include_images": True,
+                "image_format": "png",
+                "max_image_size": "1920x1080"
+            },
+            "ai": {
+                "enabled": False,  # Would require API keys
+                "provider": "claude",
+                "correction_enabled": True,
+                "structure_enhancement": True
+            },
+            "output": {
+                "formats": ["markdown", "epub", "yaml"],
+                "preserve_original": True,
+                "output_directory": "./output/advanced",
+                "compression": "auto"
+            },
+            "performance": {
+                "parallel_processing": True,
+                "max_workers": 2,
+                "memory_limit_mb": 1024,
+                "temp_dir": "/tmp/vexy_pdf_werk"
+            }
+        }
+    )
+
+    print(f"Configuration name: {config.name}")
+    print(f"OCR languages: {config.value['processing']['ocr_language']}")
+    print(f"Force OCR: {config.value['processing']['force_ocr']}")
+    print(f"AI enhancement: {config.value['ai']['enabled']}")
+    print(f"Parallel processing: {config.value['performance']['parallel_processing']}")
+
+    return config
+
+
+def process_with_custom_converter():
+    """Demonstrate using a custom markdown converter configuration."""
+    print("\n📝 Custom Converter Example")
+    print("-" * 40)
+
+    data_dir = Path(__file__).parent.parent / "data"
+    output_dir = Path(__file__).parent.parent / "output" / "custom_converter"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    pdf_file = data_dir / "multicolumn.pdf"
+
+    if not pdf_file.exists():
+        print(f"❌ Sample PDF not found: {pdf_file}")
+        return
+
+    try:
+        # Initialize with custom settings
+        markdown_generator = MarkdownGenerator()
+
+        # Create a custom basic converter with specific settings
+        custom_converter = BasicConverter()
+
+        # Process the PDF
+        print(f"Processing: {pdf_file.name}")
+        result = markdown_generator.convert_pdf_to_markdown(pdf_file)
+
+        if result.success:
+            print(f"✓ Successfully converted {len(result.pages)} pages")
+
+            # Save with custom formatting
+            for i, page in enumerate(result.pages):
+                # Custom markdown formatting
+                content = f"""# {page.title}
+
+*Page {page.page_number + 1} of {result.total_pages}*
+
+---
+
+{page.content}
+
+---
+
+*Generated by Vexy PDF Werk with custom configuration*
+*Source: {pdf_file.name}*
+"""
+
+                page_file = output_dir / f"page_{i+1:02d}_{page.slug}.md"
+                page_file.write_text(content, encoding='utf-8')
+                print(f"   ✓ Saved: {page_file.name}")
+
+        else:
+            print("❌ Conversion failed")
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+
+
+def demonstrate_quality_settings():
+    """Demonstrate different quality and performance settings."""
+    print("\n⚡ Quality vs Performance Settings")
+    print("-" * 40)
+
+    # High quality, slower processing
+    high_quality_config = {
+        "processing": {
+            "pdf_quality": "maximum",
+            "force_ocr": True,
+            "ocr_dpi": 300,
+            "preprocessing": True
+        },
+        "conversion": {
+            "text_extraction_method": "detailed",
+            "preserve_formatting": True,
+            "detect_columns": True,
+            "extract_tables": True
+        }
+    }
+
+    # Fast processing, lower quality
+    fast_config = {
+        "processing": {
+            "pdf_quality": "medium",
+            "force_ocr": False,
+            "ocr_dpi": 150,
+            "preprocessing": False
+        },
+        "conversion": {
+            "text_extraction_method": "basic",
+            "preserve_formatting": False,
+            "detect_columns": False,
+            "extract_tables": False
+        }
+    }
+
+    print("High Quality Configuration:")
+    for section, settings in high_quality_config.items():
+        print(f"  {section}:")
+        for key, value in settings.items():
+            print(f"    {key}: {value}")
+
+    print("\nFast Processing Configuration:")
+    for section, settings in fast_config.items():
+        print(f"  {section}:")
+        for key, value in settings.items():
+            print(f"    {key}: {value}")
+
+
+def demonstrate_error_handling():
+    """Demonstrate robust error handling configurations."""
+    print("\n🛡️ Error Handling Configuration")
+    print("-" * 40)
+
+    error_handling_config = {
+        "error_handling": {
+            "continue_on_error": True,
+            "max_retries": 3,
+            "retry_delay": 1.0,
+            "fallback_to_basic": True,
+            "log_level": "DEBUG",
+            "save_error_logs": True
+        },
+        "validation": {
+            "check_file_permissions": True,
+            "validate_pdf_integrity": True,
+            "check_disk_space": True,
+            "minimum_free_space_mb": 100
+        },
+        "recovery": {
+            "partial_success_handling": "save",
+            "temp_file_cleanup": True,
+            "backup_original": False
+        }
+    }
+
+    print("Error Handling Settings:")
+    for section, settings in error_handling_config.items():
+        print(f"  {section}:")
+        for key, value in settings.items():
+            print(f"    {key}: {value}")
+
+
+def main():
+    """Demonstrate various configuration options."""
+    print("🔧 Vexy PDF Werk - Custom Configuration Examples")
+    print("=" * 60)
+
+    # Demonstrate different configuration approaches
+    basic_config = demonstrate_basic_config()
+    advanced_config = demonstrate_advanced_config()
+
+    # Show practical configuration usage
+    process_with_custom_converter()
+
+    # Show quality vs performance trade-offs
+    demonstrate_quality_settings()
+
+    # Show error handling options
+    demonstrate_error_handling()
+
+    print("\n📋 Configuration Best Practices:")
+    print("=" * 40)
+    print("1. Start with basic configuration and adjust as needed")
+    print("2. Enable OCR only when necessary (performance impact)")
+    print("3. Choose appropriate quality settings for your use case")
+    print("4. Configure error handling for production use")
+    print("5. Use AI enhancement only when API keys are available")
+    print("6. Adjust parallel processing based on system resources")
+    print("7. Monitor disk space and memory usage for large batches")
+
+    print("\n🎯 Use Case Recommendations:")
+    print("-" * 40)
+    print("• Document archival: High quality, preserve original")
+    print("• Batch processing: Medium quality, parallel processing")
+    print("• Real-time processing: Basic quality, fast settings")
+    print("• Academic papers: Enable column detection, table extraction")
+    print("• Scanned documents: Force OCR, high DPI")
+    print("• Multi-language docs: Configure OCR for multiple languages")
+
+    print(f"\n✅ Configuration examples completed!")
+    print("💡 Modify these examples for your specific use case.")
+
+
+if __name__ == "__main__":
+    main()
