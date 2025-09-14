@@ -155,24 +155,25 @@ This project uses modern Python tooling:
 ### Development Setup
 
 ```bash
-# Install uv
+# Install uv and hatch
 curl -LsSf https://astral.sh/uv/install.sh | sh
+pip install hatch
 
 # Clone and setup
 git clone https://github.com/vexyart/vexy-pdf-werk
 cd vexy-pdf-werk
-uv venv --python 3.12
-uv sync --all-extras
 
-# Run tests
-PYTHONPATH=src python -m pytest tests/
+# Run tests using hatch (automatically manages environment)
+hatch run test
 
-# Run linting
-uv run ruff check .
-uv run ruff format .
+# Run linting and formatting
+hatch run lint
 
 # Type checking
-uv run mypy src/vexy_pdf_werk/
+hatch run type-check
+
+# Or run individual commands
+hatch run python -c "import vexy_pdf_werk; print(vexy_pdf_werk.__version__)"
 ```
 
 ## Architecture

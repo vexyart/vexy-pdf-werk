@@ -9,14 +9,14 @@ PDF/A, Markdown, ePub, and structured metadata.
 
 # Import version from hatch-vcs generated file
 try:
-    from ._version import __version__, __version_tuple__
+    from vexy_pdf_werk._version import __version__, __version_tuple__
 except ImportError:
     # Fallback for development environment without git tags
     __version__ = "0.0.0+dev"
     __version_tuple__ = (0, 0, 0, "dev")
 
 # Import main components from the main module
-from .vexy_pdf_werk import Config, main, process_data
+from vexy_pdf_werk.vexy_pdf_werk import Config, main, process_data
 
 # Package metadata
 __author__ = "Fontlab Ltd"

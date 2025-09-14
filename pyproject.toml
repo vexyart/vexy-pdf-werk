@@ -33,6 +33,21 @@ classifiers = [
 ]
 
 dependencies = [
+    "aiohttp>=3.12.15",
+    "ebooklib>=0.19",
+    "fire>=0.7.1",
+    "loguru>=0.7.3",
+    "pathvalidate>=3.3.1",
+    "pikepdf>=9.11.0",
+    "platformdirs>=4.4.0",
+    "pydantic>=2.11.9",
+    "pypdf>=6.0.0",
+    "pyyaml>=6.0.2",
+    "reportlab>=4.4.3",
+    "requests>=2.32.5",
+    "rich>=14.1.0",
+    "toml>=0.10.2",
+    "unicode-slugify>=0.1.5",
 ]
 
 # Author information
@@ -92,7 +107,7 @@ all = [
 # Entry points for command-line executables installed with the package.
 #------------------------------------------------------------------------------
 [project.scripts]
-# CLINAME = "vexy_pdf_werk.__main__:main"
+vpw = "vexy_pdf_werk.cli:main"
 
 #------------------------------------------------------------------------------
 # BUILD SYSTEM CONFIGURATION
@@ -123,9 +138,9 @@ include = [
 exclude = ["**/__pycache__", "**/.pytest_cache", "**/.mypy_cache"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+only-include = ["src/vexy_pdf_werk"]
+sources = ["src"]
 reproducible = true
-
 
 # Version control system hook configuration
 # Automatically updates the version file from git tags
@@ -153,6 +168,8 @@ allow-direct-references = true # Allow direct references in metadata (useful for
 features = ['dev', 'test', 'all']
 installer = "uv" # Use uv for fast dependency resolution and installation
 dependencies = []
+dev-mode = true
+python = "3.12"
 
 # Commands available in the default environment
 [tool.hatch.envs.default.scripts]
@@ -200,6 +217,8 @@ all = ["style", "typing", "fix"]
 [tool.hatch.envs.test]
 features = ['test'] # Use test extras as dependencies
 installer = "uv" # Use uv for fast dependency resolution
+dev-mode = true
+python = "3.12"
 
 # Testing environment commands
 [tool.hatch.envs.test.scripts]
@@ -225,6 +244,8 @@ build = "sphinx-build -b html docs/source docs/build"
 [tool.hatch.envs.ci]
 features = ['test']
 installer = "uv" # Use uv for fast dependency resolution
+dev-mode = true
+python = "3.12"
 
 
 [tool.hatch.envs.ci.scripts]
@@ -326,6 +347,7 @@ python_classes = ["Test*"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 testpaths = ["tests"]
+pythonpath = ["src"]
 
 [tool.pytest-benchmark]
 min_rounds = 100

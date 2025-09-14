@@ -1,0 +1,21 @@
+document:
+  source_file: test_document.pdf
+  source_size_bytes: 2085
+  processed_at: '2025-09-14T22:49:46.641281'
+  processing_time_seconds: 0.01
+pdf_info:
+  pages: 2
+  has_text: true
+  is_scanned: false
+  has_images: false
+  title: Test Document for VPW
+  author: VPW Test Suite
+  creation_date: D:20250914224736+02'00'
+processing:
+  formats_generated:
+  - markdown
+  markdown_pages: 2
+content:
+  estimated_word_count: 43
+  first_page_preview: 'Chapter 1: Introduction This is the first page of our test
+    document. It contains some sample text to test the conversion.'

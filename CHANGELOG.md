@@ -9,29 +9,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Created comprehensive 4-part development specification (spec/101.md - spec/104.md)
-  - Part 1: Planning and Architecture - Complete technical architecture and design decisions
-  - Part 2: Project Structure and Setup - Development environment and scaffolding setup
-  - Part 3: Implementation Details - Full code implementation for core components
-  - Part 4: Testing and Deployment - Testing strategy, quality assurance, and CI/CD
-- Established detailed project roadmap in PLAN.md for quality and reliability improvements
-- Created TODO.md with prioritized task list for infrastructure improvements
-- Added CHANGELOG.md for version tracking and change documentation
+### Added - Phase 1 Foundation Complete
+- **Configuration System**: Dynamic config loading with TOML files, environment variables, and CLI args
+  - Platform-aware config directory (`~/.config/vexy-pdf-werk/config.toml`)
+  - Hierarchical configuration: CLI > env vars > config file > defaults
+  - Pydantic-based validation and type safety
+- **CLI Interface**: Fire-based command-line interface with rich console output
+  - Commands: `process`, `config --show/--init`, `version`
+  - Input validation and comprehensive error handling
+  - Progress tracking with Rich progress bars
+- **PDF Processing Foundation**: Async PDF analysis and processing workflow
+  - PDF content analysis using pikepdf (pages, text, images, metadata)
+  - External tool integration (ocrmypdf, qpdf, tesseract)
+  - OCR and PDF/A conversion pipeline framework
+- **Core Infrastructure**: Utility modules for file operations and validation
+  - PDF validation with detailed error reporting
+  - File operation utilities with proper error handling
+  - Slug generation for organized output files
+- **Development Toolchain**: Complete modern Python development setup
+  - hatch + hatch-vcs for version management (working correctly)
+  - uv for package management and virtual environments
+  - ruff for linting and formatting, mypy for type checking
+  - pytest for testing with proper source path configuration
 
-### Technical Specifications
-- Defined modern Python toolchain: hatch + hatch-vcs, uv, ruff, Fire
-- Architected modular pipeline: PDF processor → Markdown generator → ePub creator → Metadata extractor
-- Designed multi-backend conversion system (Marker, MarkItDown, Docling, basic fallback)
-- Planned optional AI integration with Claude/Gemini CLI services
-- Established comprehensive testing strategy with unit/integration/CI workflows
-- Created packaging and deployment automation with PyPI publishing
+### Technical Implementation
+- Modular architecture with clear separation: `core/`, `integrations/`, `utils/`
+- Async workflow support for external process management
+- Comprehensive error handling with graceful fallbacks
+- Type-safe configuration management with Pydantic models
+- Rich console interface for better user experience
 
-### Documentation
-- Comprehensive specification covering all aspects from planning to deployment
-- Step-by-step instructions suitable for junior developers
-- Complete code examples with type hints and error handling
-- Quality assurance procedures and automated release workflows
+### Testing & Validation
+- All development tools (ruff, mypy, pytest) running successfully
+- CLI functionality validated with integration tests
+- Configuration system tested with real config files
+- Import structure and packaging verified
+
+### Previous Work
+- Created comprehensive 4-part development specification (SPEC.md)
+- Established detailed project roadmap in PLAN.md
+- Technical architecture and toolchain decisions documented
 
 ## [0.1.0] - Initial Commit
 
@@ -42,3 +59,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Placeholder source structure in src/vexy_pdf_werk/
 - External integrations directory structure
 - Git repository initialization
+### Changed
+- Configured pytest to include `src` on PYTHONPATH via pyproject, enabling `python -m pytest` to import package without env tweaks
+- Updated PLAN.md, TODO.md, and WORK.md to reflect actual repo state and next steps
+
+### Fixed
+- Resolved local test import error (`ModuleNotFoundError: vexy_pdf_werk`) by adjusting pytest configuration
+
+### Added
+- Minimal CLI (MVP): `vexy_pdf_werk/cli.py` with `version` and `process` commands
+- Console script entry `vpw` in `pyproject.toml`

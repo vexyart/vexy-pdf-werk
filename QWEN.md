@@ -147,7 +147,7 @@ output_directory = "./output"
 
 This project uses modern Python tooling:
 
-- **Package Management**: uv + hatch
+- **Package Management**: uv + hatch (use `uv run` to run but for other operations use `hatch` like `hatch test`)
 - **Code Quality**: ruff + mypy
 - **Testing**: pytest
 - **Version Control**: git-tag-based semver with hatch-vcs

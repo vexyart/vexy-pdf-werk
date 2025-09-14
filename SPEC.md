@@ -1,7 +1,7 @@
 
 # `spec/101.md`
 
-## Vexy PDF Werk (VPW) - Part 1: Planning and Architecture
+## 1. Vexy PDF Werk (VPW) - Part 1: Planning and Architecture
 
 **Problem Analysis**: What exactly are we solving and why?
 
@@ -36,13 +36,13 @@ We're creating a comprehensive PDF processing tool that transforms "vexing" PDFs
    - Extensible converter system
    - Over-engineered for this use case, violates simplicity principles
 
-### Project Scope (One Sentence)
+### 1.1. Project Scope (One Sentence)
 
 **VPW transforms PDF documents into PDF/A format, paginated Markdown, ePub, and bibliographic YAML through a configurable pipeline using proven external tools.**
 
-### High-Level Architecture
+### 1.2. High-Level Architecture
 
-#### Data Flow Pipeline
+#### 1.2.1. Data Flow Pipeline
 
 ```
 Input PDF → PDF Analysis → OCR Enhancement → PDF/A Creation → Content Extraction → Format Generation → Output Files
@@ -50,7 +50,7 @@ Input PDF → PDF Analysis → OCR Enhancement → PDF/A Creation → Content Ex
                     Optional AI Enhancement
 ```
 
-#### Core Components
+#### 1.2.2. Core Components
 
 1. **PDF Processor** - Handles OCR, PDF/A conversion, quality enhancement
 2. **Content Extractors** - Multiple backends for PDF-to-Markdown conversion
@@ -59,11 +59,11 @@ Input PDF → PDF Analysis → OCR Enhancement → PDF/A Creation → Content Ex
 5. **CLI Interface** - Fire-based command-line tool
 6. **Configuration System** - TOML-based settings management
 
-#### Technology Stack Decisions
+#### 1.2.3. Technology Stack Decisions
 
 ##### Build and Development Tools
 - **hatch + hatch-vcs**: Modern Python project management with git-tag versioning
-- **uv**: Ultra-fast package management and virtual environments
+- **uv**: Ultra-fast package management and virtual environments, and `uv run` 
 - **ruff**: High-performance linting and formatting
 - **Fire**: Automatic CLI generation from Python objects
 
@@ -90,7 +90,7 @@ Input PDF → PDF Analysis → OCR Enhancement → PDF/A Creation → Content Ex
 
 **Rationale**: CLI tools are simpler to integrate than API libraries, and optional nature ensures core functionality works without AI.
 
-#### Configuration Architecture
+#### 1.2.4. Configuration Architecture
 
 ##### Configuration Hierarchy
 1. **Command-line arguments** (highest priority)
@@ -121,7 +121,7 @@ preserve_original = true
 output_directory = "./output"
 ```
 
-#### Integration Points
+#### 1.2.5. Integration Points
 
 ##### External Tool Dependencies
 - **System Requirements**: tesseract-ocr, qpdf, ghostscript
@@ -134,7 +134,7 @@ output_directory = "./output"
 - **Output**: Organized directory structure with consistent naming
 - **Config**: Platform-appropriate configuration directories
 
-#### Error Handling Philosophy
+#### 1.2.6. Error Handling Philosophy
 
 ##### Graceful Degradation
 - Core PDF/A conversion must always work
@@ -148,7 +148,7 @@ output_directory = "./output"
 - Validation checkpoints throughout pipeline
 - Detailed logging for debugging
 
-#### Security Considerations
+#### 1.2.7. Security Considerations
 
 ##### Input Validation
 - PDF structure validation before processing
@@ -162,65 +162,65 @@ output_directory = "./output"
 - Optional secure config file storage
 - Clear separation of public/private settings
 
-### Performance and Resource Management
+### 1.3. Performance and Resource Management
 
-#### Processing Efficiency
+#### 1.3.1. Processing Efficiency
 - **Parallel Processing**: Multi-core utilization where possible
 - **Memory Management**: Streaming for large files, cleanup of temp files
 - **Caching**: Basic caching of heavy operations (model loading)
 - **Progress Reporting**: User feedback for long-running operations
 
-#### Scalability Considerations
+#### 1.3.2. Scalability Considerations
 - **Batch Processing**: Handle multiple PDFs efficiently
 - **Resource Limits**: Configurable memory and CPU usage
 - **Async Operations**: Non-blocking network calls for AI services
 - **Interrupt Handling**: Clean shutdown and cleanup
 
-### Quality Assurance Strategy
+### 1.4. Quality Assurance Strategy
 
-#### Code Quality
+#### 1.4.1. Code Quality
 - **Type Hints**: Full type annotation for maintainability
 - **Documentation**: Comprehensive docstrings and README
 - **Testing**: Unit tests for core functions, integration tests for pipeline
 - **Formatting**: Automated code formatting with ruff
 
-#### User Experience
+#### 1.4.2. User Experience
 - **Clear CLI**: Intuitive commands with good help text
 - **Progress Feedback**: Status updates for long operations
 - **Error Messages**: Actionable error descriptions
 - **Examples**: Comprehensive usage examples in documentation
 
-### Future Extensibility
+### 1.5. Future Extensibility
 
-#### Plugin Architecture Preparation
+#### 1.5.1. Plugin Architecture Preparation
 - Clean interfaces between components
 - Configurable backend selection
 - Easy addition of new conversion engines
 - Minimal coupling between optional features
 
-#### Enhancement Opportunities
+#### 1.5.2. Enhancement Opportunities
 - Web interface for non-technical users
 - Database backend for document management
 - Integration with reference managers
 - Advanced document analysis features
 
-### Success Criteria
+### 1.6. Success Criteria
 
-#### Functional Requirements
+#### 1.6.1. Functional Requirements
 1. **PDF/A Conversion**: Reliably converts any valid PDF to PDF/A format
 2. **OCR Enhancement**: Adds searchable text layers to scanned documents
 3. **Format Generation**: Produces quality Markdown, ePub, and metadata files
 4. **AI Integration**: Optional LLM enhancement works when configured
 5. **Cross-Platform**: Runs on Linux, macOS, and Windows
 
-#### Quality Requirements
+#### 1.6.2. Quality Requirements
 1. **Reliability**: Handles malformed PDFs gracefully
 2. **Performance**: Processes typical documents in reasonable time
 3. **Usability**: Clear CLI with helpful error messages
 4. **Maintainability**: Clean, documented, testable code
 5. **Extensibility**: Easy to add new features and backends
 
-#### Deployment Requirements
+#### 1.6.3. Deployment Requirements
 1. **Easy Installation**: Single command installation via pip
 2. **Clear Dependencies**: Well-documented system requirements
 3. **Configuration**: Simple setup for optional features
@@ -233,21 +233,21 @@ This architecture provides a solid foundation for building a robust, maintainabl
 
 # `spec/102.md`
 
-## Vexy PDF Werk (VPW) - Part 2: Project Structure and Setup
+## 2. Vexy PDF Werk (VPW) - Part 2: Project Structure and Setup
 
 This section provides detailed step-by-step instructions for setting up the development environment and creating the initial project structure.
 
-### Development Environment Setup
+### 2.1. Development Environment Setup
 
-#### Prerequisites Installation
+#### 2.1.1. Prerequisites Installation
 
 ##### 1. Install uv (Fast Python Package Manager)
 ```bash
-## Install uv globally
+## 3. Install uv globally
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source ~/.bashrc  # or restart terminal
 
-## Verify installation
+## 4. Verify installation
 uv --version
 ```
 
@@ -271,26 +271,26 @@ choco install tesseract qpdf ghostscript imagemagick pandoc
 
 ##### 3. Install hatch with uv
 ```bash
-## Install hatch globally using uv
+## 5. Install hatch globally using uv
 uv tool install hatch
 
-## Verify installation
+## 6. Verify installation
 hatch --version
 ```
 
-#### Project Initialization
+#### 6.0.1. Project Initialization
 
 ##### 1. Create Project Directory and Initialize
 ```bash
-## Create project directory
+## 7. Create project directory
 mkdir vexy-pdf-werk
 cd vexy-pdf-werk
 
-## Initialize uv environment
+## 8. Initialize uv environment
 uv venv --python 3.12
 uv init --name vexy-pdf-werk --app
 
-## Initialize git repository
+## 9. Initialize git repository
 git init
 ```
 
@@ -349,21 +349,21 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-## Advanced PDF-to-Markdown conversion
+## 10. Advanced PDF-to-Markdown conversion
 markdown = [
     "marker-pdf>=0.2.0",
     "markitdown>=0.0.5",
     "docling>=1.0.0",
 ]
 
-## AI/LLM integration
+## 11. AI/LLM integration
 ai = [
     "anthropic>=0.20.0",
     "google-generativeai>=0.5.0",
     "openai>=1.0.0",
 ]
 
-## Development dependencies
+## 12. Development dependencies
 dev = [
     "pytest>=8.0.0",
     "pytest-cov>=4.0.0",
@@ -374,7 +374,7 @@ dev = [
     "pre-commit>=3.0.0",
 ]
 
-## All optional dependencies
+## 13. All optional dependencies
 all = [
     "vexy-pdf-werk[markdown]",
     "vexy-pdf-werk[ai]",
@@ -494,13 +494,13 @@ exclude_lines = [
 ##### 3. Create Project Directory Structure
 
 ```bash
-## Create the complete directory structure
+## 14. Create the complete directory structure
 mkdir -p src/vexy_pdf_werk/{core,integrations,utils}
 mkdir -p tests/{unit,integration,fixtures}
 mkdir -p docs/{api,user-guide,development}
 mkdir -p external/{ai-inference,datalab}
 
-## Create __init__.py files
+## 15. Create __init__.py files
 touch src/vexy_pdf_werk/__init__.py
 touch src/vexy_pdf_werk/core/__init__.py
 touch src/vexy_pdf_werk/integrations/__init__.py
@@ -509,7 +509,7 @@ touch tests/__init__.py
 touch tests/unit/__init__.py
 touch tests/integration/__init__.py
 
-## Create main module files
+## 16. Create main module files
 touch src/vexy_pdf_werk/{cli,config}.py
 touch src/vexy_pdf_werk/core/{pdf_processor,markdown_generator,epub_creator,metadata_extractor}.py
 touch src/vexy_pdf_werk/integrations/{ai_services,ocr_services,marker_services}.py
@@ -562,13 +562,13 @@ vexy-pdf-werk/
 └── .gitignore
 ```
 
-#### Initial File Setup
+#### 16.0.1. Initial File Setup
 
 ##### 1. Create Main Package __init__.py
 
 ```python
-## src/vexy_pdf_werk/__init__.py
-## this_file: src/vexy_pdf_werk/__init__.py
+## 17. src/vexy_pdf_werk/__init__.py
+## 18. this_file: src/vexy_pdf_werk/__init__.py
 
 """Vexy PDF Werk - Transform PDFs into high-quality, accessible formats."""
 
@@ -585,7 +585,7 @@ __all__ = ["__version__"]
 
 ```python
 ##!/usr/bin/env python3
-## this_file: src/vexy_pdf_werk/cli.py
+## 19. this_file: src/vexy_pdf_werk/cli.py
 
 """Fire-based CLI interface for Vexy PDF Werk."""
 
@@ -707,7 +707,7 @@ if __name__ == "__main__":
 ##### 3. Create Basic Configuration Module
 
 ```python
-## this_file: src/vexy_pdf_werk/config.py
+## 20. this_file: src/vexy_pdf_werk/config.py
 
 """Configuration management for Vexy PDF Werk."""
 
@@ -855,9 +855,9 @@ def create_default_config() -> VPWConfig:
 ##### 4. Create Basic Git Configuration
 
 ```bash
-## Create .gitignore
+## 21. Create .gitignore
 cat > .gitignore << 'EOF'
-## Python
+## 22. Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -880,7 +880,7 @@ wheels/
 *.egg
 MANIFEST
 
-## Virtual environments
+## 23. Virtual environments
 .env
 .venv
 env/
@@ -889,14 +889,14 @@ ENV/
 env.bak/
 venv.bak/
 
-## IDE
+## 24. IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-## Testing
+## 25. Testing
 .pytest_cache/
 .coverage
 htmlcov/
@@ -907,10 +907,10 @@ coverage.xml
 *.cover
 .hypothesis/
 
-## Jupyter
+## 26. Jupyter
 .ipynb_checkpoints
 
-## OS
+## 27. OS
 .DS_Store
 .DS_Store?
 ._*
@@ -919,7 +919,7 @@ coverage.xml
 ehthumbs.db
 Thumbs.db
 
-## Project specific
+## 28. Project specific
 output/
 temp/
 *.pdf
@@ -928,11 +928,11 @@ test_output/
 logs/
 *.log
 
-## Configuration (don't commit secrets)
+## 29. Configuration (don't commit secrets)
 config.local.toml
 .env.local
 
-## External integrations
+## 30. External integrations
 external/ai-inference/*.key
 external/datalab/*.key
 EOF
@@ -941,31 +941,31 @@ EOF
 ##### 5. Install Dependencies and Verify Setup
 
 ```bash
-## Install core dependencies
+## 31. Install core dependencies
 uv add fire rich loguru platformdirs pydantic pathvalidate unicode-slugify pypdf pikepdf pyyaml toml requests aiohttp ebooklib
 
-## Install development dependencies
+## 32. Install development dependencies
 uv add --dev pytest pytest-cov pytest-asyncio ruff mypy pre-commit
 
-## Verify the installation
+## 33. Verify the installation
 uv run python -c "import vexy_pdf_werk; print(f'VPW version: {vexy_pdf_werk.__version__}')"
 
-## Test the CLI
+## 34. Test the CLI
 uv run vpw --help
 uv run vpw version
 
-## Test basic functionality (should show "not implemented" message)
+## 35. Test basic functionality (should show "not implemented" message)
 echo "Test PDF" > test.pdf
 uv run vpw process test.pdf --verbose
 rm test.pdf
 ```
 
-#### Development Workflow Setup
+#### 35.0.1. Development Workflow Setup
 
 ##### 1. Initialize Pre-commit Hooks
 
 ```bash
-## Create pre-commit configuration
+## 36. Create pre-commit configuration
 cat > .pre-commit-config.yaml << 'EOF'
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -992,39 +992,39 @@ repos:
         additional_dependencies: [types-toml, types-requests, types-PyYAML]
 EOF
 
-## Install pre-commit hooks
+## 37. Install pre-commit hooks
 uv run pre-commit install
 ```
 
 ##### 2. Create Development Scripts
 
 ```bash
-## Create development convenience scripts
+## 38. Create development convenience scripts
 mkdir -p scripts
 
 cat > scripts/dev-setup.sh << 'EOF'
 ##!/bin/bash
-## Development environment setup script
+## 39. Development environment setup script
 set -e
 
 echo "Setting up Vexy PDF Werk development environment..."
 
-## Ensure uv is available
+## 40. Ensure uv is available
 if ! command -v uv &> /dev/null; then
     echo "Installing uv..."
     curl -LsSf https://astral.sh/uv/install.sh | sh
     source ~/.bashrc
 fi
 
-## Create virtual environment and install dependencies
+## 41. Create virtual environment and install dependencies
 echo "Installing dependencies..."
 uv sync --all-extras
 
-## Install pre-commit hooks
+## 42. Install pre-commit hooks
 echo "Setting up pre-commit hooks..."
 uv run pre-commit install
 
-## Verify installation
+## 43. Verify installation
 echo "Verifying installation..."
 uv run python -c "import vexy_pdf_werk; print('VPW imported successfully')"
 uv run vpw version
@@ -1038,20 +1038,20 @@ chmod +x scripts/dev-setup.sh
 ##### 3. Verify Complete Setup
 
 ```bash
-## Run the development setup script
+## 44. Run the development setup script
 ./scripts/dev-setup.sh
 
-## Run initial linting
+## 45. Run initial linting
 uv run ruff check .
 uv run ruff format .
 
-## Run initial tests (will be empty but should pass)
+## 46. Run initial tests (will be empty but should pass)
 uv run pytest tests/ -v
 
-## Verify hatch can build the package
+## 47. Verify hatch can build the package
 hatch build
 
-## Test CLI help output
+## 48. Test CLI help output
 uv run vpw --help
 ```
 
@@ -1061,20 +1061,20 @@ This completes the project structure and setup phase. The next part will focus o
 
 # `spec/103.md`
 
-## Vexy PDF Werk (VPW) - Part 3: Implementation Details
+## 49. Vexy PDF Werk (VPW) - Part 3: Implementation Details
 
 This section provides detailed implementation guidance for all core components of the VPW processing pipeline.
 
-### Core Processing Pipeline Implementation
+### 49.1. Core Processing Pipeline Implementation
 
-#### 1. PDF Processor Implementation
+#### 49.1.1. PDF Processor Implementation
 
 The PDF processor is the heart of VPW, handling OCR enhancement and PDF/A conversion.
 
 ##### Core PDF Processor (`src/vexy_pdf_werk/core/pdf_processor.py`)
 
 ```python
-## this_file: src/vexy_pdf_werk/core/pdf_processor.py
+## 50. this_file: src/vexy_pdf_werk/core/pdf_processor.py
 
 """PDF processing and OCR enhancement."""
 
@@ -1400,12 +1400,12 @@ class PDFProcessor:
         logger.success("PDF/A conversion completed")
 ```
 
-#### 2. Markdown Generator Implementation
+#### 50.0.1. Markdown Generator Implementation
 
 ##### Markdown Generator with Multiple Backends (`src/vexy_pdf_werk/core/markdown_generator.py`)
 
 ```python
-## this_file: src/vexy_pdf_werk/core/markdown_generator.py
+## 51. this_file: src/vexy_pdf_werk/core/markdown_generator.py
 
 """Markdown generation with multiple conversion backends."""
 
@@ -1870,12 +1870,12 @@ class MarkdownGenerator:
         return yaml.dump(frontmatter, default_flow_style=False).strip()
 ```
 
-#### 3. AI Services Integration
+#### 51.0.1. AI Services Integration
 
 ##### AI Services Factory and Implementations (`src/vexy_pdf_werk/integrations/ai_services.py`)
 
 ```python
-## this_file: src/vexy_pdf_werk/integrations/ai_services.py
+## 52. this_file: src/vexy_pdf_werk/integrations/ai_services.py
 
 """AI service integrations for text enhancement."""
 
@@ -2136,13 +2136,13 @@ This completes the core implementation details for the main processing component
 
 # `spec/104.md`
 
-## Vexy PDF Werk (VPW) - Part 4: Testing and Deployment
+## 53. Vexy PDF Werk (VPW) - Part 4: Testing and Deployment
 
 This final section covers comprehensive testing strategies, quality assurance processes, packaging, and deployment procedures.
 
-### Testing Strategy Implementation
+### 53.1. Testing Strategy Implementation
 
-#### 1. Test Structure and Organization
+#### 53.1.1. Test Structure and Organization
 
 ##### Test Directory Structure
 ```
@@ -2167,12 +2167,12 @@ tests/
     └── configs/               # Test configuration files
 ```
 
-#### 2. Test Configuration and Fixtures
+#### 53.1.2. Test Configuration and Fixtures
 
 ##### Pytest Configuration (`tests/conftest.py`)
 
 ```python
-## this_file: tests/conftest.py
+## 54. this_file: tests/conftest.py
 
 """Pytest configuration and shared fixtures for VPW tests."""
 
@@ -2276,10 +2276,10 @@ def mock_qpdf():
         yield mock_run
 
 
-## Pytest markers configuration
+## 55. Pytest markers configuration
 pytest_plugins = []
 
-## Skip slow tests by default
+## 56. Skip slow tests by default
 def pytest_collection_modifyitems(config, items):
     """Modify test collection to handle markers."""
     if config.getoption("--runslow"):
@@ -2304,12 +2304,12 @@ def pytest_addoption(parser):
     )
 ```
 
-#### 3. Unit Tests Implementation
+#### 56.0.1. Unit Tests Implementation
 
 ##### Configuration Tests (`tests/unit/test_config.py`)
 
 ```python
-## this_file: tests/unit/test_config.py
+## 57. this_file: tests/unit/test_config.py
 
 """Unit tests for configuration management."""
 
@@ -2429,7 +2429,7 @@ class TestConfigDirectories:
 ##### PDF Processor Tests (`tests/unit/test_pdf_processor.py`)
 
 ```python
-## this_file: tests/unit/test_pdf_processor.py
+## 58. this_file: tests/unit/test_pdf_processor.py
 
 """Unit tests for PDF processor."""
 
@@ -2611,12 +2611,12 @@ class TestPDFInfo:
         assert info.creation_date is None
 ```
 
-#### 4. Integration Tests
+#### 58.0.1. Integration Tests
 
 ##### Full Pipeline Tests (`tests/integration/test_full_pipeline.py`)
 
 ```python
-## this_file: tests/integration/test_full_pipeline.py
+## 59. this_file: tests/integration/test_full_pipeline.py
 
 """Integration tests for the complete VPW pipeline."""
 
@@ -2792,7 +2792,7 @@ class TestErrorHandling:
 ##### CLI Tests (`tests/integration/test_cli.py`)
 
 ```python
-## this_file: tests/integration/test_cli.py
+## 60. this_file: tests/integration/test_cli.py
 
 """Integration tests for CLI interface."""
 
@@ -2914,13 +2914,13 @@ class TestCLIFireIntegration:
         assert hasattr(vpw, 'version')
 ```
 
-#### 5. Quality Assurance and Code Analysis
+#### 60.0.1. Quality Assurance and Code Analysis
 
 ##### Code Quality Scripts (`scripts/quality-check.sh`)
 
 ```bash
 ##!/bin/bash
-## this_file: scripts/quality-check.sh
+## 61. this_file: scripts/quality-check.sh
 
 """Comprehensive quality assurance script."""
 
@@ -2928,7 +2928,7 @@ set -e
 
 echo "🔍 Running comprehensive quality checks for Vexy PDF Werk..."
 
-## Colors for output
+## 62. Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -2951,7 +2951,7 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-## Check if we're in the right directory
+## 63. Check if we're in the right directory
 if [[ ! -f "pyproject.toml" ]]; then
     print_error "Not in project root directory (pyproject.toml not found)"
     exit 1
@@ -2959,13 +2959,13 @@ fi
 
 print_status "Checking development environment..."
 
-## Check uv availability
+## 64. Check uv availability
 if ! command -v uv &> /dev/null; then
     print_error "uv is not installed or not in PATH"
     exit 1
 fi
 
-## Check hatch availability
+## 65. Check hatch availability
 if ! command -v hatch &> /dev/null; then
     print_error "hatch is not installed or not in PATH"
     exit 1
@@ -2973,7 +2973,7 @@ fi
 
 print_success "Development tools available"
 
-## 1. Code formatting with ruff
+## 66. Code formatting with ruff
 print_status "Checking code formatting..."
 if uv run ruff format --check .; then
     print_success "Code formatting is correct"
@@ -2984,7 +2984,7 @@ else
     print_success "Code formatting fixed"
 fi
 
-## 2. Linting with ruff
+## 67. Linting with ruff
 print_status "Running linting checks..."
 if uv run ruff check --fix .; then
     print_success "No linting issues found"
@@ -2992,7 +2992,7 @@ else
     print_warning "Some linting issues were found and fixed"
 fi
 
-## 3. Type checking with mypy
+## 68. Type checking with mypy
 print_status "Running type checks..."
 if uv run mypy src/vexy_pdf_werk/; then
     print_success "Type checking passed"
@@ -3001,7 +3001,7 @@ else
     exit 1
 fi
 
-## 4. Security scan (if bandit is available)
+## 69. Security scan (if bandit is available)
 print_status "Running security scan..."
 if uv run bandit -r src/ -f json -o bandit-report.json 2>/dev/null; then
     print_success "Security scan completed"
@@ -3009,10 +3009,10 @@ else
     print_warning "Security scan skipped (bandit not available)"
 fi
 
-## 5. Run tests
+## 70. Run tests
 print_status "Running test suite..."
 
-## Unit tests
+## 71. Unit tests
 print_status "Running unit tests..."
 if uv run pytest tests/unit/ -v --tb=short; then
     print_success "Unit tests passed"
@@ -3021,7 +3021,7 @@ else
     exit 1
 fi
 
-## Integration tests (if not in CI)
+## 72. Integration tests (if not in CI)
 if [[ -z "$CI" ]]; then
     print_status "Running integration tests..."
     if uv run pytest tests/integration/ -v --tb=short -m "not slow"; then
@@ -3034,7 +3034,7 @@ else
     print_status "Skipping integration tests in CI"
 fi
 
-## 6. Test coverage
+## 73. Test coverage
 print_status "Checking test coverage..."
 if uv run pytest --cov=src/vexy_pdf_werk --cov-report=term --cov-report=html tests/unit/; then
     print_success "Coverage report generated"
@@ -3042,7 +3042,7 @@ else
     print_warning "Coverage check failed"
 fi
 
-## 7. Build check
+## 74. Build check
 print_status "Testing package build..."
 if hatch build; then
     print_success "Package builds successfully"
@@ -3053,7 +3053,7 @@ else
     exit 1
 fi
 
-## 8. Documentation check
+## 75. Documentation check
 print_status "Checking documentation..."
 if [[ -f "README.md" ]]; then
     print_success "README.md exists"
@@ -3061,7 +3061,7 @@ else
     print_warning "README.md missing"
 fi
 
-## 9. Configuration validation
+## 76. Configuration validation
 print_status "Validating configuration..."
 if uv run python -c "
 from src.vexy_pdf_werk.config import VPWConfig
@@ -3078,7 +3078,7 @@ else
     exit 1
 fi
 
-## 10. CLI smoke test
+## 77. CLI smoke test
 print_status "Testing CLI interface..."
 if uv run python -m vexy_pdf_werk.cli version >/dev/null 2>&1; then
     print_success "CLI smoke test passed"
@@ -3104,19 +3104,19 @@ echo "  ✅ CLI smoke test"
 print_status "Project is ready for deployment! 🚀"
 ```
 
-#### 6. Packaging and Distribution
+#### 77.0.1. Packaging and Distribution
 
 ##### Release Workflow (`scripts/release.sh`)
 
 ```bash
 ##!/bin/bash
-## this_file: scripts/release.sh
+## 78. this_file: scripts/release.sh
 
 """Automated release workflow script."""
 
 set -e
 
-## Colors and formatting
+## 79. Colors and formatting
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -3128,7 +3128,7 @@ print_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-## Check arguments
+## 80. Check arguments
 if [[ $# -ne 1 ]]; then
     print_error "Usage: $0 <version>"
     print_error "Example: $0 1.0.0"
@@ -3137,7 +3137,7 @@ fi
 
 VERSION="$1"
 
-## Validate version format (semantic versioning)
+## 81. Validate version format (semantic versioning)
 if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
     print_error "Invalid version format. Use semantic versioning (e.g., 1.0.0)"
     exit 1
@@ -3145,13 +3145,13 @@ fi
 
 print_status "Starting release process for version $VERSION"
 
-## 1. Check for clean working directory
+## 82. Check for clean working directory
 if ! git diff-index --quiet HEAD --; then
     print_error "Working directory is not clean. Commit or stash changes first."
     exit 1
 fi
 
-## 2. Check current branch
+## 83. Check current branch
 CURRENT_BRANCH=$(git branch --show-current)
 if [[ "$CURRENT_BRANCH" != "main" ]]; then
     print_warning "You are not on the main branch (current: $CURRENT_BRANCH)"
@@ -3163,40 +3163,40 @@ if [[ "$CURRENT_BRANCH" != "main" ]]; then
     fi
 fi
 
-## 3. Run quality checks
+## 84. Run quality checks
 print_status "Running comprehensive quality checks..."
 if ! ./scripts/quality-check.sh; then
     print_error "Quality checks failed. Fix issues before release."
     exit 1
 fi
 
-## 4. Update version in relevant files if needed
+## 85. Update version in relevant files if needed
 print_status "Preparing version $VERSION..."
 
-## 5. Run full test suite including slow tests
+## 86. Run full test suite including slow tests
 print_status "Running complete test suite..."
 if ! uv run pytest tests/ -v --runslow; then
     print_error "Test suite failed"
     exit 1
 fi
 
-## 6. Build package
+## 87. Build package
 print_status "Building package..."
 if ! hatch build; then
     print_error "Package build failed"
     exit 1
 fi
 
-## 7. Create git tag
+## 88. Create git tag
 print_status "Creating git tag v$VERSION..."
 git tag -a "v$VERSION" -m "Release version $VERSION"
 
-## 8. Push changes and tag
+## 89. Push changes and tag
 print_status "Pushing changes and tag to remote..."
 git push origin "$CURRENT_BRANCH"
 git push origin "v$VERSION"
 
-## 9. Publish to PyPI (test first)
+## 90. Publish to PyPI (test first)
 print_status "Publishing to Test PyPI..."
 if hatch publish -r test; then
     print_success "Published to Test PyPI"
@@ -3230,26 +3230,26 @@ else
     exit 1
 fi
 
-## 10. Clean up build artifacts
+## 91. Clean up build artifacts
 print_status "Cleaning up build artifacts..."
 rm -rf dist/ build/ *.egg-info/
 
-## 11. Create GitHub release (if gh is available)
+## 92. Create GitHub release (if gh is available)
 if command -v gh &> /dev/null; then
     print_status "Creating GitHub release..."
 
     # Generate release notes
     RELEASE_NOTES="Release version $VERSION
 
-### Changes
+### 92.1. Changes
 $(git log --oneline --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD~1)..HEAD)
 
-### Installation
+### 92.2. Installation
 \`\`\`bash
 pip install vexy-pdf-werk==$VERSION
 \`\`\`
 
-### Documentation
+### 92.3. Documentation
 See [README.md](README.md) for usage instructions.
 "
 
@@ -3278,12 +3278,12 @@ echo "  2. Announce release on relevant channels"
 echo "  3. Monitor for issues and feedback"
 ```
 
-#### 7. Continuous Integration Setup
+#### 92.3.1. Continuous Integration Setup
 
 ##### GitHub Actions Workflow (`.github/workflows/ci.yml`)
 
 ```yaml
-## this_file: .github/workflows/ci.yml
+## 93. this_file: .github/workflows/ci.yml
 
 name: CI
 

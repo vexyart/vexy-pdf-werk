@@ -1,171 +1,105 @@
 # this_file: PLAN.md
+---
 
-# Project Quality & Reliability Improvement Plan
+# Project Plan: Vexy PDF Werk (Implementation Phase)
 
-## Project Overview
+This plan outlines the implementation of the core features for Vexy PDF Werk, building upon the established foundation. The goal is to create a functional, robust, and extensible PDF processing pipeline as defined in `SPEC.md`.
 
-This plan addresses critical structural and documentation issues in the vexy-pdf-werk Python package to establish a solid foundation for development. The focus is on fixing fundamental problems that prevent proper package functionality and establishing essential project management practices.
+## Phase 1: Solidify Foundation & Configuration (10%)
 
-Also see full `SPEC.md` 
+This phase ensures the project setup is complete and the configuration system is fully integrated.
 
-## Technical Architecture Decisions
+1.  **Verify Toolchain and Environment**:
+    -   [ ] Confirm `uv run pytest`, `uv run ruff check .`, and `uv run mypy src` execute cleanly.
+    -   [ ] Validate that `hatch build` correctly generates `src/vexy_pdf_werk/_version.py` via `hatch-vcs`.
 
-### Package Structure
-- Follow src-layout pattern (already established)
-- Use hatch-vcs for version management from git tags
-- Implement proper Python package initialization
-- Support type hints with py.typed marker
+2.  **Implement Dynamic Configuration**:
+    -   [ ] Implement the configuration loading logic in `src/vexy_pdf_werk/config.py` as specified.
+    -   [ ] Integrate `load_config` into the CLI (`cli.py`) to load settings from `config.toml`, environment variables, and command-line arguments.
+    -   [ ] Implement the `vpw config --show` and `vpw config --init` commands to manage the user configuration file.
 
-### Development Workflow
-- Maintain hatch-based environment management
-- Use uv for fast dependency resolution
-- Continue with ruff/mypy/pytest toolchain
-- Follow PEP 621 packaging standards
+## Phase 2: Core PDF Processing Pipeline (30%)
 
-## Phase-by-Phase Implementation
+Implement the primary PDF enhancement workflow: analyzing, OCRing, and converting to a high-quality, archivable PDF/A format.
 
-### Phase 1: Fix Critical Package Structure Issues
+1.  **Implement PDF Analysis**:
+    -   [ ] Implement the `PDFInfo` dataclass in `core/pdf_processor.py`.
+    -   [ ] Implement the `PDFProcessor.analyze_pdf` method using `pikepdf` to extract metadata and determine content characteristics (e.g., text, images, scanned).
 
-**Objective:** Resolve fundamental import and version management problems
+2.  **Implement OCR & PDF/A Workflow**:
+    -   [ ] Implement the main `PDFProcessor.create_better_pdf` orchestration method.
+    -   [ ] Implement `_enhance_with_ocr` helper using `ocrmypdf` via `asyncio.create_subprocess_exec`. Handle `force_ocr` and `skip-text` logic.
+    -   [ ] Implement `_convert_to_pdfa` helper using `qpdf` for final optimization and linearization.
+    -   [ ] Add robust error handling and logging for external tool failures.
 
-**Tasks:**
-1. **Create proper __init__.py file**
-   - Problem: Package cannot be imported due to missing __init__.py
-   - Solution: Create src/vexy_pdf_werk/__init__.py with proper exports
-   - Import main classes/functions from main module
-   - Expose __version__ at package level
-   
-2. **Integrate hatch-vcs versioning**
-   - Problem: Version is hardcoded in main module, conflicts with hatch-vcs
-   - Solution: Remove hardcoded version, let hatch-vcs manage it
-   - Update imports to use generated _version.py
-   - Ensure version is accessible at package level
+3.  **Unit & Integration Testing**:
+    -   [ ] Create unit tests for `analyze_pdf` with fixture PDFs (text-based, image-based, mixed).
+    -   [ ] Create integration tests for `create_better_pdf` that call the actual external tools (`ocrmypdf`, `qpdf`) on small test PDFs. Mark as `@pytest.mark.slow`.
 
-3. **Fix test imports**
-   - Problem: test_package.py tries to import package that can't be imported
-   - Solution: Ensure package structure allows successful imports
-   - Add basic smoke tests for main functionality
-   - Verify test suite runs without errors
+## Phase 3: Content Conversion to Markdown (30%)
 
-**Testing Strategy:**
-- Run `hatch run test` to verify tests pass
-- Test package import: `python -c "import vexy_pdf_werk; print(vexy_pdf_werk.__version__)"`
-- Verify hatch-vcs version generation works
+Implement the flexible PDF-to-Markdown conversion system with multiple backends.
 
-### Phase 2: Complete Essential Documentation
+1.  **Implement Converter Abstraction**:
+    -   [ ] Define the `MarkdownConverter` abstract base class in `core/markdown_generator.py`.
+    -   [ ] Define `PageContent` and `MarkdownResult` dataclasses.
 
-**Objective:** Provide proper project documentation and change tracking
+2.  **Implement Concrete Converters**:
+    -   [ ] **Basic Converter**: Implement `BasicConverter` using `PyMuPDF` (`fitz`) for text and image extraction. This is the essential fallback.
+    -   [ ] **Marker Converter (Optional)**: Implement `MarkerConverter`, including lazy import to prevent hard dependency. Handle paginated output.
+    -   [ ] **MarkItDown Converter (Optional)**: Implement `MarkItDownConverter`, including logic to handle pagination by splitting the PDF.
 
-**Tasks:**
-1. **Fix README.md**
-   - Problem: README has empty title and generic content
-   - Solution: Add proper project title, description, and purpose
-   - Include accurate installation and usage examples
-   - Document development workflow with correct commands
+3.  **Implement Markdown Generator**:
+    -   [ ] Implement the `MarkdownGenerator` class to manage and select the appropriate converter (`_select_converter`).
+    -   [ ] Implement `generate_markdown` to orchestrate the conversion and file writing.
+    -   [ ] Implement `_write_markdown_files` to save content with proper naming (`001--slug.md`) and YAML frontmatter.
 
-2. **Create CHANGELOG.md**
-   - Problem: No change tracking for releases
-   - Solution: Create CHANGELOG following Keep a Changelog format
-   - Document initial release and recent improvements
-   - Prepare for future version tracking
+4.  **Testing**:
+    -   [ ] Create unit tests for the `BasicConverter`.
+    -   [ ] Create integration tests for `MarkerConverter` and `MarkItDownConverter` if they are installed, marked appropriately (e.g., `@pytest.mark.requires_marker`).
 
-3. **Add type hint support**
-   - Problem: Package doesn't declare type hint support
-   - Solution: Create src/vexy_pdf_werk/py.typed marker file
-   - Ensure type checkers recognize the package supports types
-   - Validate mypy can analyze package types
+## Phase 4: Additional Format Generators (15%)
 
-**Validation Criteria:**
-- README clearly explains what the package does
-- CHANGELOG follows standard format
-- Type checkers recognize package type hints
+Create the remaining output formats: ePub and bibliographic YAML.
 
-### Phase 3: Establish Project Management Foundation
+1.  **Implement Metadata Extractor**:
+    -   [ ] Implement `MetadataExtractor` in `core/metadata_extractor.py`.
+    -   [ ] The extractor should gather information from `PDFInfo` and potentially other sources.
+    -   [ ] It should generate a `metadata.yaml` file with structured bibliographic data (title, author, etc.).
 
-**Objective:** Create project management structure following CLAUDE.md guidelines
+2.  **Implement ePub Creator**:
+    -   [ ] Implement `EpubCreator` in `core/epub_creator.py`.
+    -   [ ] Use the generated Markdown files as input.
+    -   [ ] Use `ebooklib` to convert the collection of Markdown files into a single `.epub` file.
 
-**Tasks:**
-1. **Create comprehensive PLAN.md**
-   - Document long-term project goals and architecture
-   - Define development phases and milestones
-   - Include technical specifications and patterns
+## Phase 5: AI Integration (Optional) (10%)
 
-2. **Initialize WORK.md**
-   - Track current development activities
-   - Document work-in-progress items
-   - Provide status updates for ongoing tasks
+Implement the optional AI-based text correction and enhancement features.
 
-3. **Validate development toolchain**
-   - Problem: Tools may not work correctly with fixed package structure
-   - Solution: Run full development workflow validation
-   - Test hatch environments and scripts
-   - Verify ruff, mypy, pytest integration
-   - Ensure pre-commit hooks work
+1.  **Implement AI Service Abstraction**:
+    -   [ ] Define the `AIService` abstract base class in `integrations/ai_services.py`.
 
-**Success Metrics:**
-- All hatch commands execute successfully
-- Development workflow is fully functional
-- Project follows established conventions
+2.  **Implement AI Services**:
+    -   [ ] Implement `ClaudeCLIService` to interact with the `claude` CLI tool for text correction.
+    -   [ ] Implement a similar service for Gemini if a CLI tool is available and specified.
+    -   [ ] Implement the `AIServiceFactory` to select the configured AI provider.
 
-## Edge Cases & Error Handling
+3.  **Integrate into PDF Processor**:
+    -   [ ] Implement the `_enhance_with_ai` method in `PDFProcessor`.
+    -   [ ] This method will be called conditionally based on the `ai.enabled` configuration flag.
 
-### Version Management
-- Handle case where git tags don't exist yet
-- Ensure version fallback works in development
-- Test version access from different import paths
+## Phase 6: Finalize CLI and Release Prep (5%)
 
-### Package Import Issues
-- Verify package imports work from different contexts
-- Handle circular import scenarios
-- Test compatibility with different Python versions
+Connect all pipeline components and prepare for an initial release.
 
-### Tool Integration
-- Ensure tools work with src-layout structure
-- Validate tool configuration after package fixes
-- Test development workflow end-to-end
+1.  **Complete CLI `process` Command**:
+    -   [ ] In `cli.py`, replace the stub `process` logic with a full call to the processing pipeline.
+    -   [ ] Instantiate `PDFProcessor`, `MarkdownGenerator`, etc.
+    -   [ ] Use `rich.progress` to display the status of each stage (Analyzing, OCR, Converting, etc.).
+    -   [ ] Handle and display errors gracefully to the user.
 
-## Testing & Validation Strategy
-
-### Unit Testing
-- Verify package can be imported successfully
-- Test version access and format
-- Validate main module functionality
-
-### Integration Testing  
-- Run complete development workflow
-- Test hatch environment creation and scripts
-- Verify tool integration (ruff, mypy, pytest)
-
-### Documentation Testing
-- Validate README examples work
-- Test installation instructions
-- Verify development setup steps
-
-## Risk Assessment
-
-### High Priority Risks
-- **Import failures:** Package structure changes could break existing code
-  - Mitigation: Careful testing of import paths
-- **Version conflicts:** hatch-vcs integration might conflict with existing version handling
-  - Mitigation: Remove hardcoded versions systematically
-
-### Medium Priority Risks
-- **Tool configuration issues:** Development tools might need reconfiguration
-  - Mitigation: Test full workflow after changes
-- **Documentation accuracy:** Examples might not match actual behavior
-  - Mitigation: Test all documented examples
-
-## Future Considerations
-
-### Immediate Next Steps (Post-Plan)
-- Begin Phase 1 implementation
-- Validate each change incrementally  
-- Test package functionality continuously
-
-### Longer-term Improvements
-- Add more comprehensive test coverage
-- Implement actual PDF processing functionality
-- Add CLI interface if needed
-- Enhance documentation with examples
-
-This plan focuses exclusively on foundational reliability and does not include new feature development, maintaining the scope as requested.
+2.  **Documentation and Release**:
+    -   [ ] Update `README.md` with complete usage instructions for the functional CLI.
+    -   [ ] Update `CHANGELOG.md` with all implemented features.
+    -   [ ] Perform a final round of testing.
+    -   [ ] Tag a `v0.1.0` release.
