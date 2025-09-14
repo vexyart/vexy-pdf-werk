@@ -4,10 +4,10 @@
 import asyncio
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
-import pytest
 import pikepdf
+import pytest
 
 from vexy_pdf_werk.config import VPWConfig
 from vexy_pdf_werk.core.pdf_processor import PDFProcessor, ProcessingResult
@@ -34,8 +34,8 @@ class TestPDFProcessingIntegration:
     def sample_pdf(self):
         """Create a sample PDF file for testing."""
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
-            from reportlab.pdfgen import canvas
             from reportlab.lib.pagesizes import letter
+            from reportlab.pdfgen import canvas
 
             # Create PDF with reportlab
             c = canvas.Canvas(temp_file.name, pagesize=letter)
@@ -105,13 +105,18 @@ class TestPDFProcessingIntegration:
                     mock_process.communicate.return_value = (b"OCR Success", b"")
                     mock_process.returncode = 0
 
-                    # Create output files
-                    command_args = args[0]
-                    if len(command_args) > 1:
-                        output_file = command_args[-1]
-                        input_file = command_args[-2]
-                        if Path(input_file).exists() and not Path(output_file).exists():
+                    # Create output files - handle both ocrmypdf and qpdf commands
+                    command_args = args
+                    if len(command_args) >= 2:
+                        # For qpdf: [qpdf, --linearize, --object-streams=generate, input, output]
+                        # For ocrmypdf: [ocrmypdf, options..., input, output]
+                        # In both cases, output is the last argument
+                        output_file = Path(command_args[-1])
+                        input_file = Path(command_args[-2])
+
+                        if input_file.exists() and not output_file.exists():
                             import shutil
+                            output_file.parent.mkdir(parents=True, exist_ok=True)
                             shutil.copy2(input_file, output_file)
 
                     return mock_process
@@ -126,9 +131,14 @@ class TestPDFProcessingIntegration:
 
                 # Verify OCR was attempted (force-ocr flag should be in command)
                 mock_exec.assert_called()
-                call_args = mock_exec.call_args[0]  # Get positional args
-                command_args = ' '.join(call_args[0])  # Join command list
-                assert '--force-ocr' in command_args
+                # Check if any of the calls had the force-ocr flag
+                found_force_ocr = False
+                for call in mock_exec.call_args_list:
+                    call_args = call[0]  # Get positional args
+                    if any('--force-ocr' in str(arg) for arg in call_args):
+                        found_force_ocr = True
+                        break
+                assert found_force_ocr, f"Expected --force-ocr flag in command calls: {mock_exec.call_args_list}"
 
     @pytest.mark.asyncio
     async def test_create_better_pdf_with_ai_enhancement(self, config, sample_pdf):
@@ -144,15 +154,29 @@ class TestPDFProcessingIntegration:
             output_path = Path(temp_dir) / "enhanced_ai.pdf"
 
             with patch('asyncio.create_subprocess_exec') as mock_exec:
-                mock_process = AsyncMock()
-                mock_process.communicate.return_value = (b"Success", b"")
-                mock_process.returncode = 0
-                mock_exec.return_value = mock_process
+                def mock_subprocess_ai(*args, **kwargs):
+                    mock_process = AsyncMock()
+                    mock_process.communicate.return_value = (b"Success", b"")
+                    mock_process.returncode = 0
 
-                with patch('shutil.copy2'):
-                    result = await processor.create_better_pdf(
-                        sample_pdf, output_path
-                    )
+                    # Simulate file creation for any external tool calls
+                    command_args = args
+                    if len(command_args) >= 2:
+                        output_file = Path(command_args[-1])
+                        input_file = Path(command_args[-2])
+
+                        if input_file.exists() and not output_file.exists():
+                            import shutil
+                            output_file.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copy2(input_file, output_file)
+
+                    return mock_process
+
+                mock_exec.side_effect = mock_subprocess_ai
+
+                result = await processor.create_better_pdf(
+                    sample_pdf, output_path
+                )
 
                 assert result.success is True
                 # AI enhancement is currently a placeholder, so this tests the workflow
@@ -176,7 +200,7 @@ class TestPDFProcessingIntegration:
 
                 assert result.success is False
                 assert result.error is not None
-                assert "OCR processing failed" in result.error
+                assert "OCR failed with error" in result.error
 
     @pytest.mark.asyncio
     async def test_create_better_pdf_qpdf_failure(self, processor, sample_pdf):
@@ -225,7 +249,6 @@ class TestPDFProcessingIntegration:
     async def test_create_better_pdf_progress_tracking(self, processor, sample_pdf):
         """Test PDF enhancement with progress tracking."""
         from rich.progress import Progress
-        from unittest.mock import Mock
 
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "progress_test.pdf"
@@ -235,15 +258,29 @@ class TestPDFProcessingIntegration:
             task_id = "test_task"
 
             with patch('asyncio.create_subprocess_exec') as mock_exec:
-                mock_process = AsyncMock()
-                mock_process.communicate.return_value = (b"Success", b"")
-                mock_process.returncode = 0
-                mock_exec.return_value = mock_process
+                def mock_subprocess_progress(*args, **kwargs):
+                    mock_process = AsyncMock()
+                    mock_process.communicate.return_value = (b"Success", b"")
+                    mock_process.returncode = 0
 
-                with patch('shutil.copy2'):
-                    result = await processor.create_better_pdf(
-                        sample_pdf, output_path, progress, task_id
-                    )
+                    # Simulate file creation for any external tool calls
+                    command_args = args
+                    if len(command_args) >= 2:
+                        output_file = Path(command_args[-1])
+                        input_file = Path(command_args[-2])
+
+                        if input_file.exists() and not output_file.exists():
+                            import shutil
+                            output_file.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copy2(input_file, output_file)
+
+                    return mock_process
+
+                mock_exec.side_effect = mock_subprocess_progress
+
+                result = await processor.create_better_pdf(
+                    sample_pdf, output_path, progress, task_id
+                )
 
                 assert result.success is True
 
@@ -257,15 +294,29 @@ class TestPDFProcessingIntegration:
             output_path = Path(temp_dir) / "metadata_test.pdf"
 
             with patch('asyncio.create_subprocess_exec') as mock_exec:
-                mock_process = AsyncMock()
-                mock_process.communicate.return_value = (b"Success", b"")
-                mock_process.returncode = 0
-                mock_exec.return_value = mock_process
+                def mock_subprocess_metadata(*args, **kwargs):
+                    mock_process = AsyncMock()
+                    mock_process.communicate.return_value = (b"Success", b"")
+                    mock_process.returncode = 0
 
-                with patch('shutil.copy2'):
-                    result = await processor.create_better_pdf(
-                        sample_pdf, output_path
-                    )
+                    # Simulate file creation for any external tool calls
+                    command_args = args
+                    if len(command_args) >= 2:
+                        output_file = Path(command_args[-1])
+                        input_file = Path(command_args[-2])
+
+                        if input_file.exists() and not output_file.exists():
+                            import shutil
+                            output_file.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copy2(input_file, output_file)
+
+                    return mock_process
+
+                mock_exec.side_effect = mock_subprocess_metadata
+
+                result = await processor.create_better_pdf(
+                    sample_pdf, output_path
+                )
 
                 assert result.success is True
                 assert result.pdf_info.title == 'Integration Test Document'
@@ -278,15 +329,29 @@ class TestPDFProcessingIntegration:
             output_path = Path(temp_dir) / "cleanup_test.pdf"
 
             with patch('asyncio.create_subprocess_exec') as mock_exec:
-                mock_process = AsyncMock()
-                mock_process.communicate.return_value = (b"Success", b"")
-                mock_process.returncode = 0
-                mock_exec.return_value = mock_process
+                def mock_subprocess_cleanup(*args, **kwargs):
+                    mock_process = AsyncMock()
+                    mock_process.communicate.return_value = (b"Success", b"")
+                    mock_process.returncode = 0
 
-                with patch('shutil.copy2'):
-                    result = await processor.create_better_pdf(
-                        sample_pdf, output_path
-                    )
+                    # Simulate file creation for any external tool calls
+                    command_args = args
+                    if len(command_args) >= 2:
+                        output_file = Path(command_args[-1])
+                        input_file = Path(command_args[-2])
+
+                        if input_file.exists() and not output_file.exists():
+                            import shutil
+                            output_file.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copy2(input_file, output_file)
+
+                    return mock_process
+
+                mock_exec.side_effect = mock_subprocess_cleanup
+
+                result = await processor.create_better_pdf(
+                    sample_pdf, output_path
+                )
 
                 assert result.success is True
 

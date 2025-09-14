@@ -1,105 +1,81 @@
 # this_file: PLAN.md
 ---
 
-# Project Plan: Vexy PDF Werk (Implementation Phase)
+# Project Plan: Vexy PDF Werk (Next Steps)
 
-This plan outlines the implementation of the core features for Vexy PDF Werk, building upon the established foundation. The goal is to create a functional, robust, and extensible PDF processing pipeline as defined in `SPEC.md`.
+This plan outlines the next phases of development for Vexy PDF Werk, focusing on completing the feature set as defined in `SPEC.md` and ensuring the package is fully functional and robust.
 
-## Phase 1: Solidify Foundation & Configuration (10%)
+## Phase 1: Advanced AI-Powered PDF Structure Enhancement
 
-This phase ensures the project setup is complete and the configuration system is fully integrated.
+This phase introduces a sophisticated workflow for improving PDF content and structure using LLMs and the QDF (qpdf data format).
 
-1.  **Verify Toolchain and Environment**:
-    -   [ ] Confirm `uv run pytest`, `uv run ruff check .`, and `uv run mypy src` execute cleanly.
-    -   [ ] Validate that `hatch build` correctly generates `src/vexy_pdf_werk/_version.py` via `hatch-vcs`.
+1.  **QDF/JSON Representation**:
+    -   Implement a new module, `qdf_processor.py`, to handle the conversion of a PDF page to its QDF/JSON representation using `pikepdf` or by calling `qpdf` directly (`qpdf --qdf --json`).
+    -   Implement logic to extract a "mini version" containing only the text streams from the QDF/JSON.
 
-2.  **Implement Dynamic Configuration**:
-    -   [ ] Implement the configuration loading logic in `src/vexy_pdf_werk/config.py` as specified.
-    -   [ ] Integrate `load_config` into the CLI (`cli.py`) to load settings from `config.toml`, environment variables, and command-line arguments.
-    -   [ ] Implement the `vpw config --show` and `vpw config --init` commands to manage the user configuration file.
+2.  **LLM Integration for PDF Enhancement**:
+    -   Create a new function in `ai_services.py` called `enhance_pdf_structure`.
+    -   This function will take the "mini version" (text) of a page and send it to the LLM with a carefully crafted prompt.
+    -   The prompt will instruct the LLM to:
+        -   Correct orthographical and logical errors in the text.
+        -   Suggest structural improvements.
+        -   Provide suggestions for PDF/A tagging.
+        -   Return the changes in a unified diff format.
 
-## Phase 2: Core PDF Processing Pipeline (30%)
+3.  **Diff Application and Merging**:
+    -   Implement a diff parser to handle the LLM's output.
+    -   Implement logic to apply the parsed diff to the "mini version" of the text.
+    -   Research and implement a method to merge the changes from the updated "mini version" back into the "full" QDF/JSON version. This is a complex task that may involve replacing text streams or updating object properties in the QDF/JSON structure.
 
-Implement the primary PDF enhancement workflow: analyzing, OCRing, and converting to a high-quality, archivable PDF/A format.
+4.  **Integration into the Main Pipeline**:
+    -   Integrate this new enhancement step into the `PDFProcessor`'s `create_better_pdf` method.
+    -   This will be an optional step, enabled by a new configuration flag in `config.py` (e.g., `ai.structure_enhancement_enabled`).
 
-1.  **Implement PDF Analysis**:
-    -   [ ] Implement the `PDFInfo` dataclass in `core/pdf_processor.py`.
-    -   [ ] Implement the `PDFProcessor.analyze_pdf` method using `pikepdf` to extract metadata and determine content characteristics (e.g., text, images, scanned).
+5.  **Testing**:
+    -   Create unit tests for the QDF/JSON processing.
+    -   Create unit tests for the diff parsing and application.
+    -   Create integration tests (mocking the LLM) to test the end-to-end flow for a single page.
 
-2.  **Implement OCR & PDF/A Workflow**:
-    -   [ ] Implement the main `PDFProcessor.create_better_pdf` orchestration method.
-    -   [ ] Implement `_enhance_with_ocr` helper using `ocrmypdf` via `asyncio.create_subprocess_exec`. Handle `force_ocr` and `skip-text` logic.
-    -   [ ] Implement `_convert_to_pdfa` helper using `qpdf` for final optimization and linearization.
-    -   [ ] Add robust error handling and logging for external tool failures.
+## Phase 2: Advanced Markdown Converters & Testing
 
-3.  **Unit & Integration Testing**:
-    -   [ ] Create unit tests for `analyze_pdf` with fixture PDFs (text-based, image-based, mixed).
-    -   [ ] Create integration tests for `create_better_pdf` that call the actual external tools (`ocrmypdf`, `qpdf`) on small test PDFs. Mark as `@pytest.mark.slow`.
+This phase focuses on implementing the optional, high-fidelity Markdown converters and ensuring the entire conversion system is well-tested.
 
-## Phase 3: Content Conversion to Markdown (30%)
+1.  **Implement Advanced Converters**:
+    -   **Marker Converter**: Implement the `MarkerConverter` class in `src/vexy_pdf_werk/core/markdown_converter.py`. This should be a lazy-loaded implementation that is only used if the `marker-pdf` package is installed.
+    -   **MarkItDown Converter**: Implement the `MarkItDownConverter` class, also as a lazy-loaded optional backend.
+    -   **Converter Selection Logic**: Enhance the `MarkdownGenerator` to intelligently select the best available converter, with a clear fallback mechanism (`Marker` > `MarkItDown` > `Basic`).
 
-Implement the flexible PDF-to-Markdown conversion system with multiple backends.
+2.  **Testing**:
+    -   **Unit Tests for `BasicConverter`**: Create comprehensive unit tests for the existing `BasicConverter` to ensure its reliability as the fallback.
+    -   **Integration Tests for Advanced Converters**: Add integration tests for `MarkerConverter` and `MarkItDownConverter`. These tests should be marked appropriately (e.g., `@pytest.mark.requires_marker`) and only run if the respective packages are installed.
 
-1.  **Implement Converter Abstraction**:
-    -   [ ] Define the `MarkdownConverter` abstract base class in `core/markdown_generator.py`.
-    -   [ ] Define `PageContent` and `MarkdownResult` dataclasses.
+## Phase 3: Quality, Reliability & Robustness
 
-2.  **Implement Concrete Converters**:
-    -   [ ] **Basic Converter**: Implement `BasicConverter` using `PyMuPDF` (`fitz`) for text and image extraction. This is the essential fallback.
-    -   [ ] **Marker Converter (Optional)**: Implement `MarkerConverter`, including lazy import to prevent hard dependency. Handle paginated output.
-    -   [ ] **MarkItDown Converter (Optional)**: Implement `MarkItDownConverter`, including logic to handle pagination by splitting the PDF.
+This phase focuses on improving the overall quality and reliability of the package.
 
-3.  **Implement Markdown Generator**:
-    -   [ ] Implement the `MarkdownGenerator` class to manage and select the appropriate converter (`_select_converter`).
-    -   [ ] Implement `generate_markdown` to orchestrate the conversion and file writing.
-    -   [ ] Implement `_write_markdown_files` to save content with proper naming (`001--slug.md`) and YAML frontmatter.
+1.  **Fix Remaining Test Suite Issues**:
+    -   Address the 5 failing metadata extractor tests related to `Path.stat()` mocking.
+    -   Clean up test files to reduce Ruff issues.
+    -   Improve the reliability of async tests and mock configurations.
 
-4.  **Testing**:
-    -   [ ] Create unit tests for the `BasicConverter`.
-    -   [ ] Create integration tests for `MarkerConverter` and `MarkItDownConverter` if they are installed, marked appropriately (e.g., `@pytest.mark.requires_marker`).
+2.  **Enhanced Logging & Monitoring**:
+    -   Implement structured logging with detailed progress information for each processing stage.
+    -   Add timing metrics for performance monitoring.
+    -   Add resource usage monitoring (memory, disk space) with warnings.
 
-## Phase 4: Additional Format Generators (15%)
+3.  **Comprehensive Input Validation & Edge Case Handling**:
+    -   Add disk space validation before processing large PDFs.
+    -   Add comprehensive file permission validation.
+    -   Improve memory management for very large PDF files (e.g., chunked processing).
 
-Create the remaining output formats: ePub and bibliographic YAML.
+## Phase 4: Release Preparation
 
-1.  **Implement Metadata Extractor**:
-    -   [ ] Implement `MetadataExtractor` in `core/metadata_extractor.py`.
-    -   [ ] The extractor should gather information from `PDFInfo` and potentially other sources.
-    -   [ ] It should generate a `metadata.yaml` file with structured bibliographic data (title, author, etc.).
+This phase prepares the project for a new release.
 
-2.  **Implement ePub Creator**:
-    -   [ ] Implement `EpubCreator` in `core/epub_creator.py`.
-    -   [ ] Use the generated Markdown files as input.
-    -   [ ] Use `ebooklib` to convert the collection of Markdown files into a single `.epub` file.
+1.  **Final Documentation Updates**:
+    -   Update `README.md` and other documentation to reflect the new features (advanced converters, AI integration).
+    -   Ensure the `CHANGELOG.md` is up-to-date.
 
-## Phase 5: AI Integration (Optional) (10%)
-
-Implement the optional AI-based text correction and enhancement features.
-
-1.  **Implement AI Service Abstraction**:
-    -   [ ] Define the `AIService` abstract base class in `integrations/ai_services.py`.
-
-2.  **Implement AI Services**:
-    -   [ ] Implement `ClaudeCLIService` to interact with the `claude` CLI tool for text correction.
-    -   [ ] Implement a similar service for Gemini if a CLI tool is available and specified.
-    -   [ ] Implement the `AIServiceFactory` to select the configured AI provider.
-
-3.  **Integrate into PDF Processor**:
-    -   [ ] Implement the `_enhance_with_ai` method in `PDFProcessor`.
-    -   [ ] This method will be called conditionally based on the `ai.enabled` configuration flag.
-
-## Phase 6: Finalize CLI and Release Prep (5%)
-
-Connect all pipeline components and prepare for an initial release.
-
-1.  **Complete CLI `process` Command**:
-    -   [ ] In `cli.py`, replace the stub `process` logic with a full call to the processing pipeline.
-    -   [ ] Instantiate `PDFProcessor`, `MarkdownGenerator`, etc.
-    -   [ ] Use `rich.progress` to display the status of each stage (Analyzing, OCR, Converting, etc.).
-    -   [ ] Handle and display errors gracefully to the user.
-
-2.  **Documentation and Release**:
-    -   [ ] Update `README.md` with complete usage instructions for the functional CLI.
-    -   [ ] Update `CHANGELOG.md` with all implemented features.
-    -   [ ] Perform a final round of testing.
-    -   [ ] Tag a `v0.1.0` release.
+2.  **Tag and Release**:
+    -   Perform a final round of testing.
+    -   Tag a new version (e.g., `v1.2.0`) and create a release on GitHub.

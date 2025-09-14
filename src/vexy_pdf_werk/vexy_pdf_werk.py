@@ -47,23 +47,59 @@ def process_data(data: list[Any], config: Config | None = None, *, debug: bool =
         msg = "Input data cannot be empty"
         raise ValueError(msg)
 
-    # TODO: Implement data processing logic
-    # Note: config parameter will be used in future implementation
-    result: dict[str, Any] = {"config_used": config is not None}
+    # Legacy interface: For full PDF processing, use the CLI
+    # This function is kept for backward compatibility
+    # The main processing pipeline is implemented in cli.py
+    logger.warning("process_data() is a legacy interface. Use 'vpw process' CLI command for full functionality.")
+
+    result: dict[str, Any] = {
+        "status": "legacy_interface",
+        "config_used": config is not None,
+        "recommendation": "Use 'vpw process <pdf_path>' for full PDF processing"
+    }
     return result
 
 
 def main() -> None:
-    """Main entry point for vexy_pdf_werk."""
+    """
+    Main entry point for vexy_pdf_werk legacy interface.
+
+    This function provides a legacy interface for basic processing.
+    For full PDF processing functionality, use the CLI interface instead:
+
+    Example:
+        python -m vexy_pdf_werk.cli process document.pdf
+
+    Raises:
+        ValueError: If configuration or data validation fails
+        RuntimeError: If processing encounters an unrecoverable error
+    """
     try:
-        # Example usage
-        config = Config(name="default", value="test", options={"key": "value"})
-        result = process_data([], config=config)
-        logger.info("Processing completed: %s", result)
+        # Example usage of legacy interface
+        logger.info("Starting vexy_pdf_werk legacy interface")
+
+        # Create example configuration
+        config = Config(
+            name="default",
+            value="test",
+            options={"mode": "legacy", "version": "1.0"}
+        )
+
+        # Process empty data as example (legacy behavior)
+        try:
+            result = process_data([], config=config, debug=True)
+            logger.info("Legacy processing completed successfully: %s", result)
+
+        except ValueError as e:
+            logger.warning("Validation error in legacy processing: %s", e)
+            logger.info("This is expected behavior for the legacy interface")
+            logger.info("For PDF processing, use: python -m vexy_pdf_werk.cli process <pdf_file>")
 
     except Exception as e:
-        logger.error("An error occurred: %s", str(e))
-        raise
+        logger.error("Unexpected error in legacy interface: %s", str(e))
+        logger.error("For PDF processing, use the CLI: python -m vexy_pdf_werk.cli")
+        msg = f"Legacy interface failed: {e}"
+        raise RuntimeError(msg) from e
 
 
 if __name__ == "__main__":

@@ -3,64 +3,47 @@
 
 # Vexy PDF Werk - TODO
 
-## Phase 1: Solidify Foundation & Configuration ✅ COMPLETE
+## Phase 1: Advanced AI-Powered PDF Structure Enhancement
 
-- [x] Verify `uv run pytest`, `ruff`, and `mypy` run cleanly.
-- [x] Validate `hatch build` generates version file correctly.
-- [x] Implement dynamic configuration loading in `src/vexy_pdf_werk/config.py`.
-- [x] Integrate `load_config` into `src/vexy_pdf_werk/cli.py`.
-- [x] Implement `vpw config --show` command.
-- [x] Implement `vpw config --init` command.
+- [ ] Create `qdf_processor.py` module.
+- [ ] Implement PDF to QDF/JSON conversion.
+- [ ] Implement extraction of "mini version" (text streams) from QDF/JSON.
+- [ ] Create `enhance_pdf_structure` function in `ai_services.py`.
+- [ ] Implement prompt for LLM to correct text, improve structure, and suggest PDF/A tags.
+- [ ] Instruct LLM to return a unified diff.
+- [ ] Implement a diff parser for the LLM output.
+- [ ] Implement logic to apply the parsed diff to the "mini version".
+- [ ] Research and implement merging of changes back into the "full" QDF/JSON.
+- [ ] Add `ai.structure_enhancement_enabled` flag to `config.py`.
+- [ ] Integrate the new enhancement step into the `PDFProcessor` pipeline.
+- [ ] Create unit tests for QDF/JSON processing.
+- [ ] Create unit tests for diff parsing and application.
+- [ ] Create integration tests for the end-to-end page enhancement flow (mocking LLM).
 
-## Phase 2: Core PDF Processing Pipeline
+## Phase 2: Advanced Markdown Converters & Testing
 
-- [x] Implement `PDFInfo` dataclass in `core/pdf_processor.py`.
-- [x] Implement `PDFProcessor.analyze_pdf` method.
-- [x] Implement `PDFProcessor.create_better_pdf` orchestration method.
-- [x] Implement `_enhance_with_ocr` helper using `ocrmypdf`.
-- [x] Implement `_convert_to_pdfa` helper using `qpdf`.
-- [x] Add error handling and logging for external tools.
-- [ ] Add unit tests for `analyze_pdf`.
-- [ ] Add integration tests for `create_better_pdf`.
+- [ ] Implement `MarkerConverter` in `src/vexy_pdf_werk/core/markdown_converter.py`.
+- [ ] Implement `MarkItDownConverter` in `src/vexy_pdf_werk/core/markdown_converter.py`.
+- [ ] Enhance `MarkdownGenerator` to select the best available converter.
+- [ ] Create unit tests for `BasicConverter`.
+- [ ] Create integration tests for `MarkerConverter`.
+- [ ] Create integration tests for `MarkItDownConverter`.
 
-## Phase 3: Content Conversion to Markdown
+## Phase 3: Quality, Reliability & Robustness
 
-- [ ] Define `MarkdownConverter` ABC and result dataclasses.
-- [ ] Implement `BasicConverter` using `PyMuPDF`.
-- [ ] Implement `MarkerConverter` (optional, lazy-loaded).
-- [ ] Implement `MarkItDownConverter` (optional, lazy-loaded).
-- [ ] Implement `MarkdownGenerator` to select and run converters.
-- [ ] Implement `_write_markdown_files` with slug naming and frontmatter.
-- [ ] Add unit tests for `BasicConverter`.
-- [ ] Add integration tests for optional converters.
+- [ ] Fix the 5 failing metadata extractor tests.
+- [ ] Clean up ruff issues in test files.
+- [ ] Improve async test patterns and mock configurations.
+- [ ] Implement structured logging for all processing stages.
+- [ ] Add timing metrics for performance monitoring.
+- [ ] Add resource usage monitoring (memory, disk space).
+- [ ] Add disk space validation before processing.
+- [ ] Add comprehensive file permission validation.
+- [ ] Investigate and improve memory management for large PDFs.
 
-## Phase 4: Additional Format Generators
+## Phase 4: Release Preparation
 
-- [ ] Implement `MetadataExtractor` in `core/metadata_extractor.py`.
-- [ ] Implement logic to generate `metadata.yaml`.
-- [ ] Implement `EpubCreator` in `core/epub_creator.py`.
-- [ ] Implement ePub generation from Markdown using `ebooklib`.
-
-## Phase 5: AI Integration (Optional)
-
-- [ ] Define `AIService` ABC in `integrations/ai_services.py`.
-- [ ] Implement `ClaudeCLIService` using `claude` CLI.
-- [ ] Implement `AIServiceFactory` to select AI provider.
-- [ ] Implement `_enhance_with_ai` in `PDFProcessor`.
-
-## Phase 6: Finalize CLI and Release Prep
-
-- [ ] Implement the full `process` command logic in `cli.py`.
-- [ ] Integrate `rich.progress` for user feedback.
-- [ ] Implement graceful error handling in the CLI.
-- [ ] Update `README.md` with full usage instructions.
-- [ ] Update `CHANGELOG.md` for `v0.1.0`.
-- [ ] Tag and prepare for `v0.1.0` release.
-
-## Completed
-
-- [x] Initial project scaffolding and foundation.
-- [x] Detailed specification (`SPEC.md`).
-- [x] Minimal CLI skeleton.
-- [x] **Phase 1 Complete**: Foundation & Configuration system with CLI interface
-- [x] **Phase 2 Core**: PDF processing pipeline foundation (missing tests)
+- [ ] Update `README.md` to include new features.
+- [ ] Update `CHANGELOG.md` with all changes since the last release.
+- [ ] Perform a final round of testing on all features.
+- [ ] Tag a new version and create a GitHub release.

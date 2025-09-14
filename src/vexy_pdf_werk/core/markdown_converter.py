@@ -1,33 +1,46 @@
 # this_file: src/vexy_pdf_werk/core/markdown_converter.py
 """Markdown conversion functionality for PDF documents."""
 
+import asyncio
+import re
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, List
 
+import aiofiles
 import pypdf
 from loguru import logger
 
-from ..config import ConversionConfig
-from ..utils.slug_utils import generate_page_slug, sanitize_file_slug
+from vexy_pdf_werk.config import ConversionConfig
+from vexy_pdf_werk.utils.slug_utils import generate_page_slug, sanitize_file_slug
+
+# Text processing constants
+MIN_LINE_LENGTH = 2
+MIN_HEADER_LENGTH = 3
+CAPS_RATIO_THRESHOLD = 0.7
+MAX_HEADER_LENGTH = 80
+MIN_PAGE_LINES = 5
+MIN_CONTENT_LENGTH = 100
 
 
 @dataclass
 class MarkdownPage:
     """Represents a single page converted to markdown."""
+
     page_number: int
     content: str
-    title: Optional[str] = None
-    slug: Optional[str] = None
+    title: str | None = None
+    slug: str | None = None
 
 
 @dataclass
 class MarkdownResult:
     """Result of markdown conversion."""
+
     success: bool
-    pages: List[MarkdownPage]
-    error: Optional[str] = None
+    pages: list[MarkdownPage]
+    error: str | None = None
     total_pages: int = 0
 
 
@@ -94,10 +107,12 @@ class BasicConverter(MarkdownConverter):
         try:
             pages = []
 
-            with open(pdf_path, 'rb') as file:
-                pdf_reader = pypdf.PdfReader(file)
-                total_pages = len(pdf_reader.pages)
+            # Run synchronous PDF reading in thread executor to avoid blocking
+            loop = asyncio.get_event_loop()
+            with ThreadPoolExecutor() as executor:
+                pdf_reader = await loop.run_in_executor(executor, self._read_pdf_sync, pdf_path)
 
+                total_pages = len(pdf_reader.pages)
                 logger.debug(f"Processing {total_pages} pages")
 
                 for page_num, page in enumerate(pdf_reader.pages):
@@ -118,12 +133,7 @@ class BasicConverter(MarkdownConverter):
                         # Generate slug for filename
                         slug = generate_page_slug(cleaned_text)
 
-                        page_md = MarkdownPage(
-                            page_number=page_num,
-                            content=cleaned_text,
-                            title=title,
-                            slug=slug
-                        )
+                        page_md = MarkdownPage(page_number=page_num, content=cleaned_text, title=title, slug=slug)
 
                         pages.append(page_md)
                         logger.debug(f"Processed page {page_num + 1}/{total_pages}")
@@ -131,29 +141,28 @@ class BasicConverter(MarkdownConverter):
                     except Exception as e:
                         logger.warning(f"Failed to process page {page_num + 1}: {e}")
                         # Create error page
-                        error_content = f"[Error processing page {page_num + 1}: {str(e)}]"
-                        pages.append(MarkdownPage(
-                            page_number=page_num,
-                            content=error_content,
-                            title=f"Page {page_num + 1} (Error)",
-                            slug=f"page-{page_num + 1}-error"
-                        ))
+                        error_content = f"[Error processing page {page_num + 1}: {e!s}]"
+                        pages.append(
+                            MarkdownPage(
+                                page_number=page_num,
+                                content=error_content,
+                                title=f"Page {page_num + 1} (Error)",
+                                slug=f"page-{page_num + 1}-error",
+                            )
+                        )
 
                 logger.success(f"Converted {len(pages)} pages to markdown")
 
-                return MarkdownResult(
-                    success=True,
-                    pages=pages,
-                    total_pages=total_pages
-                )
+                return MarkdownResult(success=True, pages=pages, total_pages=total_pages)
 
         except Exception as e:
             logger.error(f"Failed to convert PDF to markdown: {e}")
-            return MarkdownResult(
-                success=False,
-                pages=[],
-                error=str(e)
-            )
+            return MarkdownResult(success=False, pages=[], error=str(e))
+
+    def _read_pdf_sync(self, pdf_path: Path) -> pypdf.PdfReader:
+        """Synchronous PDF reading for use in thread executor."""
+        with open(pdf_path, "rb") as file:
+            return pypdf.PdfReader(file)
 
     def _clean_extracted_text(self, text: str) -> str:
         """
@@ -169,31 +178,29 @@ class BasicConverter(MarkdownConverter):
             return text
 
         # Split into lines for processing
-        lines = text.split('\n')
-        cleaned_lines = []
+        lines = text.split("\n")
+        cleaned_lines: list[str] = []
 
-        for line in lines:
+        for raw_line in lines:
             # Strip excessive whitespace
-            line = line.strip()
+            processed_line = raw_line.strip()
 
             # Skip completely empty lines in sequence (keep max 2)
-            if not line:
-                if len(cleaned_lines) >= 2 and cleaned_lines[-1] == "" and cleaned_lines[-2] == "":
+            if not processed_line:
+                if len(cleaned_lines) >= MIN_LINE_LENGTH and cleaned_lines[-1] == "" and cleaned_lines[-2] == "":
                     continue  # Skip third+ empty line
                 cleaned_lines.append("")
                 continue
 
             # Basic formatting improvements
-            line = self._improve_line_formatting(line)
-            cleaned_lines.append(line)
+            processed_line = self._improve_line_formatting(processed_line)
+            cleaned_lines.append(processed_line)
 
         # Join back together
-        result = '\n'.join(cleaned_lines)
+        result = "\n".join(cleaned_lines)
 
         # Final cleanup
-        result = result.strip()
-
-        return result
+        return result.strip()
 
     def _improve_line_formatting(self, line: str) -> str:
         """
@@ -206,8 +213,7 @@ class BasicConverter(MarkdownConverter):
             Formatted line
         """
         # Remove excessive spaces
-        import re
-        line = re.sub(r' {3,}', '  ', line)  # Max 2 spaces between words
+        line = re.sub(r" {3,}", "  ", line)  # Max 2 spaces between words
 
         # Detect potential headers (ALL CAPS lines, or lines ending with specific patterns)
         if self._looks_like_header(line):
@@ -218,34 +224,54 @@ class BasicConverter(MarkdownConverter):
 
     def _looks_like_header(self, line: str) -> bool:
         """
-        Determine if a line looks like a section header.
+        Determine if a line looks like a section header using heuristic analysis.
+
+        This method implements a two-stage heuristic algorithm to identify headers
+        in PDF text that may not have explicit formatting:
+
+        1. ALL CAPS detection: Identifies traditional document headers
+        2. Numbered section detection: Catches formal document structure
 
         Args:
             line: Line of text to check
 
         Returns:
             True if line appears to be a header
+
+        Examples:
+            >>> converter._looks_like_header("CHAPTER ONE: INTRODUCTION")
+            True
+            >>> converter._looks_like_header("1. Introduction Section")
+            True
+            >>> converter._looks_like_header("This is normal text")
+            False
         """
-        if len(line) < 3:  # Too short to be meaningful header
+        # Basic length validation: headers should be substantial but not too long
+        if len(line) < MIN_HEADER_LENGTH:  # Too short to be meaningful header
             return False
 
-        # Check for ALL CAPS (with some tolerance for punctuation)
+        # Pattern 1: ALL CAPS header detection with punctuation tolerance
+        # Many PDF headers are in ALL CAPS (e.g., "CHAPTER ONE: INTRODUCTION")
         words = line.split()
+
+        # Count words that are either uppercase or non-alphabetic (punctuation, numbers)
+        # Non-alphabetic words are included because headers often contain colons,
+        # numbers, and other formatting that shouldn't disqualify them
         caps_words = [w for w in words if w.isupper() or not w.isalpha()]
         caps_ratio = len(caps_words) / len(words) if words else 0
 
-        # If most words are caps and line is reasonably short
-        if caps_ratio > 0.7 and len(line) < 80:
+        # If 70%+ of words are caps/symbols and line is reasonably short
+        # (80 chars max to avoid catching entire paragraphs in caps)
+        if caps_ratio > CAPS_RATIO_THRESHOLD and len(line) < MAX_HEADER_LENGTH:
             return True
 
-        # Check for numbered sections
-        import re
-        if re.match(r'^\d+\.?\s+[A-Z]', line):  # "1. Title" or "1 Title"
-            return True
+        # Pattern 2: Numbered section detection
+        # Catches formal document structure like "1. Introduction" or "2 Main Content"
+        # Pattern matches: digit(s) + optional period + whitespace + capital letter
+        # Examples: "1. Title", "2 Title", "1.1 Subsection"
+        return bool(re.match(r"^\d+\.?\s+[A-Z]", line))
 
-        return False
-
-    def _extract_page_title(self, content: str) -> Optional[str]:
+    def _extract_page_title(self, content: str) -> str | None:
         """
         Extract a title from page content.
 
@@ -259,18 +285,18 @@ class BasicConverter(MarkdownConverter):
             return None
 
         # Get first meaningful line
-        lines = [line.strip() for line in content.split('\n') if line.strip()]
+        lines = [line.strip() for line in content.split("\n") if line.strip()]
         if not lines:
             return None
 
         first_line = lines[0]
 
         # Remove markdown header formatting if present
-        if first_line.startswith('## '):
+        if first_line.startswith("## "):
             first_line = first_line[3:].strip()
 
         # If line is reasonably short and not just numbers/symbols, use as title
-        if 5 < len(first_line) < 100 and any(c.isalpha() for c in first_line):
+        if MIN_PAGE_LINES < len(first_line) < MIN_CONTENT_LENGTH and any(c.isalpha() for c in first_line):
             return first_line
 
         return None
@@ -289,12 +315,11 @@ class MarkdownGenerator:
         backend = self.config.markdown_backend.lower()
 
         if backend == "basic" or backend == "auto":
-            # For now, always use basic converter
-            # TODO: Add other converters (Marker, MarkItDown, Docling) later
+            # Currently using basic converter as the primary implementation
+            # Advanced converters (Marker, MarkItDown, Docling) are planned for future versions
             return BasicConverter(self.config)
-        else:
-            logger.warning(f"Unknown markdown backend '{backend}', falling back to basic")
-            return BasicConverter(self.config)
+        logger.warning(f"Unknown markdown backend '{backend}', falling back to basic")
+        return BasicConverter(self.config)
 
     async def generate_markdown(self, pdf_path: Path, output_dir: Path) -> MarkdownResult:
         """
@@ -322,16 +347,14 @@ class MarkdownGenerator:
         logger.success(f"Generated markdown files in {output_dir}")
         return result
 
-    async def _write_paginated_files(self, pages: List[MarkdownPage], output_dir: Path) -> None:
+    async def _write_paginated_files(self, pages: list[MarkdownPage], output_dir: Path) -> None:
         """Write separate markdown file for each page."""
         output_dir.mkdir(parents=True, exist_ok=True)
 
         total_pages = len(pages)
 
         for page in pages:
-            filename = self.converter._generate_page_filename(
-                page.page_number, page.content, total_pages
-            )
+            filename = self.converter._generate_page_filename(page.page_number, page.content, total_pages)
 
             file_path = output_dir / filename
 
@@ -339,29 +362,29 @@ class MarkdownGenerator:
             frontmatter = self._create_frontmatter(page, total_pages)
 
             # Write file
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(frontmatter)
-                f.write(page.content)
+            async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
+                await f.write(frontmatter)
+                await f.write(page.content)
 
             logger.debug(f"Wrote {file_path}")
 
-    async def _write_single_file(self, pages: List[MarkdownPage], output_dir: Path, base_name: str) -> None:
+    async def _write_single_file(self, pages: list[MarkdownPage], output_dir: Path, base_name: str) -> None:
         """Write all pages to a single markdown file."""
         output_dir.mkdir(parents=True, exist_ok=True)
 
         file_path = output_dir / f"{base_name}.md"
 
-        with open(file_path, 'w', encoding='utf-8') as f:
+        async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
             # Write document header
-            f.write(f"# {base_name}\n\n")
+            await f.write(f"# {base_name}\n\n")
 
             for i, page in enumerate(pages):
                 if i > 0:
-                    f.write("\n---\n\n")  # Page separator
+                    await f.write("\n---\n\n")  # Page separator
 
-                f.write(f"## Page {page.page_number + 1}\n\n")
-                f.write(page.content)
-                f.write("\n\n")
+                await f.write(f"## Page {page.page_number + 1}\n\n")
+                await f.write(page.content)
+                await f.write("\n\n")
 
         logger.debug(f"Wrote single file: {file_path}")
 
@@ -372,10 +395,10 @@ class MarkdownGenerator:
         frontmatter += f"total_pages: {total_pages}\n"
 
         if page.title:
-            frontmatter += f"title: \"{page.title}\"\n"
+            frontmatter += f'title: "{page.title}"\n'
 
         if page.slug:
-            frontmatter += f"slug: \"{page.slug}\"\n"
+            frontmatter += f'slug: "{page.slug}"\n'
 
         frontmatter += "---\n\n"
         return frontmatter

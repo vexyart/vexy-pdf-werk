@@ -2,15 +2,24 @@
 # this_file: src/vexy_pdf_werk/cli.py
 """Fire-based CLI interface for Vexy PDF Werk."""
 
+import asyncio
 import sys
+import time
+import traceback
 from pathlib import Path
 
-import fire
+import fire  # type: ignore[import-untyped]
 from loguru import logger
 from rich.console import Console
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
 from vexy_pdf_werk import __version__
-from vexy_pdf_werk.config import create_default_config, get_config_file, load_config
+from vexy_pdf_werk.config import VPWConfig, create_default_config, get_config_file, load_config
+from vexy_pdf_werk.core.epub_creator import EpubCreator
+from vexy_pdf_werk.core.markdown_converter import MarkdownGenerator
+from vexy_pdf_werk.core.metadata_extractor import MetadataExtractor
+from vexy_pdf_werk.core.pdf_processor import PDFProcessor
+from vexy_pdf_werk.utils.validation import validate_formats, validate_output_directory, validate_pdf_file
 
 console = Console()
 
@@ -18,18 +27,18 @@ console = Console()
 class VexyPDFWerk:
     """Vexy PDF Werk - Transform PDFs into better formats."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the VPW CLI."""
-        self.version = __version__
+        self._version = __version__
 
     def process(
         self,
         pdf_path: str,
         output_dir: str | None = None,
-        formats: str = "pdfa,markdown,epub,yaml",
-        verbose: bool = False,
+        formats: str | list[str] | tuple[str, ...] = "pdfa,markdown,epub,yaml",
+        verbose: bool = False,  # noqa: FBT001, FBT002
         config_file: str | None = None,
-    ):
+    ) -> int:
         """
         Process a PDF file through the complete VPW pipeline.
 
@@ -50,53 +59,99 @@ class VexyPDFWerk:
         config_path = Path(config_file) if config_file else None
         config = load_config(config_path)
 
-        # Validate inputs
+        # Validate PDF input file
         input_path = Path(pdf_path)
-        if not input_path.exists():
-            console.print(f"[red]Error: PDF file not found: {pdf_path}[/red]")
+        try:
+            validate_pdf_file(input_path)
+        except (FileNotFoundError, ValueError, PermissionError) as e:
+            console.print("[red]PDF Validation Error:[/red]")
+            # Split multi-line error messages for better formatting
+            for line in str(e).split('\n'):
+                if line.strip():
+                    console.print(f"  {line.strip()}")
+            console.print("\n[yellow]Tip:[/yellow] Use 'vpw --help' for usage examples")
             return 1
 
-        if input_path.suffix.lower() != '.pdf':
-            console.print(f"[red]Error: File must be a PDF: {pdf_path}[/red]")
-            return 1
-
-        # Set output directory
+        # Set and validate output directory
         if output_dir is None:
             output_dir = f"./output/{input_path.stem}"
         output_path = Path(output_dir)
-        output_path.mkdir(parents=True, exist_ok=True)
+
+        try:
+            validate_output_directory(output_path, create_if_missing=True, min_free_space_mb=50)
+        except (ValueError, PermissionError, OSError) as e:
+            console.print("[red]Output Directory Error:[/red]")
+            # Split multi-line error messages for better formatting
+            for line in str(e).split('\n'):
+                if line.strip():
+                    console.print(f"  {line.strip()}")
+            console.print("\n[yellow]Tip:[/yellow] Try using a different output directory with --output-dir")
+            return 1
 
         console.print(f"Processing: [cyan]{input_path}[/cyan]")
         console.print(f"Output directory: [cyan]{output_path}[/cyan]")
 
-        # Parse requested formats
-        if isinstance(formats, (list, tuple)):
+        # Parse and validate requested formats
+        if isinstance(formats, list | tuple):
             # Fire sometimes parses comma-separated values as tuples
             requested_formats = [str(f).strip() for f in formats]
         else:
             requested_formats = [f.strip() for f in str(formats).split(',')]
-        valid_formats = {'pdfa', 'markdown', 'epub', 'yaml'}
-        invalid_formats = set(requested_formats) - valid_formats
 
-        if invalid_formats:
-            console.print(f"[red]Error: Invalid formats: {', '.join(invalid_formats)}[/red]")
-            console.print(f"Valid formats: {', '.join(valid_formats)}")
+        try:
+            requested_formats = validate_formats(requested_formats)
+        except ValueError as e:
+            console.print("[red]Format Validation Error:[/red]")
+            console.print(f"  {e!s}")
+            console.print("\n[yellow]Tip:[/yellow] Use formats like: --formats=\"markdown,epub,yaml\"")
+            console.print("[yellow]Available formats:[/yellow] pdfa, markdown, epub, yaml")
             return 1
 
         console.print(f"Requested formats: [green]{', '.join(requested_formats)}[/green]")
 
+        # Check dependencies: ePub requires Markdown
+        needs_markdown = 'markdown' in requested_formats or 'epub' in requested_formats
+        if needs_markdown and 'markdown' not in requested_formats:
+            console.print("[yellow]Note: ePub generation requires Markdown - will generate markdown content[/yellow]")
+
         # Run the processing pipeline
         try:
-            import asyncio
-            result = asyncio.run(self._run_processing_pipeline(
-                input_path, output_path, requested_formats, config, verbose
+            return asyncio.run(self._run_processing_pipeline(
+                input_path, output_path, requested_formats, config
             ))
-            return result
+        except KeyboardInterrupt:
+            console.print("\n[yellow]Processing interrupted by user[/yellow]")
+            console.print("[yellow]Tip:[/yellow] Partial results may be available in the output directory")
+            return 1
+        except MemoryError:
+            console.print("[red]Processing Failed - Insufficient Memory:[/red]")
+            console.print("  The PDF file is too large to process with available system memory.")
+            console.print(f"  File size: {input_path.stat().st_size / (1024*1024):.1f} MB")
+            console.print("\n[yellow]Suggestions:[/yellow]")
+            console.print("  • Try processing on a system with more RAM")
+            console.print("  • Split the PDF into smaller sections")
+            console.print("  • Close other applications to free up memory")
+            return 1
+        except PermissionError as e:
+            console.print("[red]Processing Failed - Permission Denied:[/red]")
+            console.print(f"  {e!s}")
+            console.print("\n[yellow]Suggestions:[/yellow]")
+            console.print("  • Check file and directory permissions")
+            console.print("  • Try running with appropriate user privileges")
+            console.print("  • Ensure the PDF file is not open in another application")
+            return 1
         except Exception as e:
-            console.print(f"[red]Processing failed: {e}[/red]")
+            error_type = type(e).__name__
+            console.print(f"[red]Processing Failed - {error_type}:[/red]")
+            console.print(f"  {e!s}")
+            console.print("\n[yellow]Troubleshooting:[/yellow]")
+            console.print("  • Verify the PDF file is not corrupted")
+            console.print("  • Try with a different PDF file")
+            console.print("  • Check system dependencies (tesseract, qpdf, ghostscript)")
+            console.print("  • Run with --verbose for detailed error information")
             if verbose:
-                import traceback
-                console.print(f"[red]Traceback: {traceback.format_exc()}[/red]")
+                console.print("\n[red]Detailed Traceback:[/red]")
+                console.print(f"{traceback.format_exc()}")
             return 1
 
     async def _run_processing_pipeline(
@@ -104,16 +159,9 @@ class VexyPDFWerk:
         input_path: Path,
         output_path: Path,
         requested_formats: list[str],
-        config,
-        verbose: bool
+        config: VPWConfig,
     ) -> int:
         """Run the complete PDF processing pipeline."""
-        import time
-        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
-
-        from .core.pdf_processor import PDFProcessor
-        from .core.markdown_converter import MarkdownGenerator
-        from .core.metadata_extractor import MetadataExtractor
 
         start_time = time.time()
 
@@ -130,8 +178,27 @@ class VexyPDFWerk:
                 pdf_processor = PDFProcessor(config)
                 markdown_generator = MarkdownGenerator(config.conversion)
                 metadata_extractor = MetadataExtractor()
+            except ImportError as e:
+                console.print("[red]Initialization Failed - Missing Dependency:[/red]")
+                console.print(f"  {e!s}")
+                console.print("\n[yellow]Required Dependencies:[/yellow]")
+                console.print("  • tesseract-ocr: for OCR processing")
+                console.print("  • qpdf: for PDF optimization")
+                console.print("  • ghostscript: for PDF/A conversion")
+                console.print("  • python packages: see requirements.txt")
+                console.print("\n[yellow]Installation Help:[/yellow]")
+                console.print("  • Ubuntu/Debian: sudo apt-get install tesseract-ocr qpdf ghostscript")
+                console.print("  • macOS: brew install tesseract qpdf ghostscript")
+                console.print("  • Windows: choco install tesseract qpdf ghostscript")
+                return 1
             except Exception as e:
-                console.print(f"[red]Failed to initialize processors: {e}[/red]")
+                error_type = type(e).__name__
+                console.print(f"[red]Initialization Failed - {error_type}:[/red]")
+                console.print(f"  {e!s}")
+                console.print("\n[yellow]Troubleshooting:[/yellow]")
+                console.print("  • Check configuration file validity")
+                console.print("  • Try 'vpw config --init' to reset configuration")
+                console.print("  • Verify all system dependencies are installed")
                 return 1
 
             formats_completed = []
@@ -157,9 +224,9 @@ class VexyPDFWerk:
             # Get PDF info for metadata
             pdf_info = await pdf_processor.analyze_pdf(input_path)
 
-            # Step 2: Markdown Generation (if requested)
+            # Step 2: Markdown Generation (if requested or needed for ePub)
             markdown_result = None
-            if 'markdown' in requested_formats:
+            if 'markdown' in requested_formats or 'epub' in requested_formats:
                 task = progress.add_task("Converting to Markdown...", total=1)
 
                 markdown_result = await markdown_generator.generate_markdown(
@@ -168,7 +235,8 @@ class VexyPDFWerk:
 
                 if markdown_result.success:
                     progress.update(task, completed=1, description="Markdown conversion completed")
-                    formats_completed.append('markdown')
+                    if 'markdown' in requested_formats:
+                        formats_completed.append('markdown')
                     page_count = len(markdown_result.pages)
                     console.print(f"[green]✓[/green] Markdown created: {page_count} pages in {output_path}")
                 else:
@@ -178,8 +246,43 @@ class VexyPDFWerk:
             # Step 3: ePub Generation (if requested)
             if 'epub' in requested_formats:
                 task = progress.add_task("Generating ePub...", total=1)
-                progress.update(task, completed=1, description="ePub generation not yet implemented")
-                console.print("[yellow]ePub generation not yet implemented[/yellow]")
+
+                if markdown_result and markdown_result.success:
+                    try:
+                        # Determine book metadata from PDF info
+                        book_title = pdf_info.title
+                        author = pdf_info.author
+
+                        epub_creator = EpubCreator(book_title=book_title, author=author)
+                        epub_path = output_path / f"{input_path.stem}.epub"
+
+                        epub_result = await epub_creator.create_epub(
+                            markdown_result, epub_path, input_path
+                        )
+
+                        if epub_result.success:
+                            progress.update(task, completed=1, description="ePub generation completed")
+                            formats_completed.append('epub')
+                            console.print(f"[green]✓[/green] ePub created: {epub_path}")
+                        else:
+                            progress.update(task, completed=1, description="ePub generation failed")
+                            console.print(f"[red]✗[/red] ePub generation failed: {epub_result.error}")
+
+                    except ImportError as e:
+                        progress.update(task, completed=1, description="ePub generation failed")
+                        console.print(f"[red]✗[/red] ePub generation failed - Missing dependency: {e}")
+                        console.print(
+                            "[yellow]Tip:[/yellow] Install with 'pip install ebooklib' "
+                            "or 'pip install vexy-pdf-werk[epub]'"
+                        )
+                    except Exception as e:
+                        progress.update(task, completed=1, description="ePub generation failed")
+                        error_type = type(e).__name__
+                        console.print(f"[red]✗[/red] ePub generation failed - {error_type}: {e}")
+                        console.print("[yellow]Tip:[/yellow] Ensure markdown content is valid and complete")
+                else:
+                    progress.update(task, completed=1, description="ePub generation skipped - no markdown content")
+                    console.print("[yellow]ePub generation skipped - markdown conversion required[/yellow]")
 
             # Step 4: Metadata YAML (if requested)
             if 'yaml' in requested_formats:
@@ -202,9 +305,18 @@ class VexyPDFWerk:
                     formats_completed.append('yaml')
                     console.print(f"[green]✓[/green] Metadata created: {yaml_path}")
 
+                except PermissionError as e:
+                    progress.update(task, completed=1, description="Metadata generation failed")
+                    console.print(f"[red]✗[/red] Metadata generation failed - Permission denied: {e}")
+                    console.print("[yellow]Tip:[/yellow] Check write permissions for the output directory")
                 except Exception as e:
                     progress.update(task, completed=1, description="Metadata generation failed")
-                    console.print(f"[red]✗[/red] Metadata generation failed: {e}")
+                    error_type = type(e).__name__
+                    console.print(f"[red]✗[/red] Metadata generation failed - {error_type}: {e}")
+                    console.print(
+                        "[yellow]Tip:[/yellow] This usually indicates an issue with "
+                        "PDF analysis or YAML formatting"
+                    )
 
         # Final summary
         total_time = time.time() - start_time
@@ -214,13 +326,16 @@ class VexyPDFWerk:
 
         return 0 if formats_completed else 1
 
-    def config(self, show: bool = False, init: bool = False):
+    def config(self, show: bool = False, init: bool = False) -> int | None:  # noqa: FBT001, FBT002
         """
         Manage VPW configuration.
 
         Args:
             show: Display current configuration
             init: Initialize default configuration file
+
+        Returns:
+            Exit code (1 for error, None for success)
         """
         if init:
             config = create_default_config()
@@ -257,27 +372,60 @@ class VexyPDFWerk:
                 console.print(f"  Output Directory: {config.output.output_directory}")
                 console.print(f"  Preserve Original: {config.output.preserve_original}")
 
+            except FileNotFoundError:
+                console.print("[red]Configuration Error - Config File Not Found:[/red]")
+                console.print("  No configuration file found at expected location")
+                console.print("\n[yellow]Solutions:[/yellow]")
+                console.print("  • Run 'vpw config --init' to create default configuration")
+                console.print("  • Use --config-file to specify a custom config file")
+                return 1
+            except PermissionError as e:
+                console.print("[red]Configuration Error - Permission Denied:[/red]")
+                console.print(f"  Cannot read configuration file: {e!s}")
+                console.print("\n[yellow]Solutions:[/yellow]")
+                console.print("  • Check file permissions on the configuration directory")
+                console.print("  • Run with appropriate user privileges")
+                return 1
             except Exception as e:
-                console.print(f"[red]Error loading configuration: {e}[/red]")
+                error_type = type(e).__name__
+                console.print(f"[red]Configuration Error - {error_type}:[/red]")
+                console.print(f"  {e!s}")
+                console.print("\n[yellow]Solutions:[/yellow]")
+                console.print("  • Check configuration file syntax (valid TOML format)")
+                console.print("  • Run 'vpw config --init' to reset to defaults")
+                console.print("  • Use --verbose for detailed error information")
                 return 1
         else:
             console.print("Use --show to display config or --init to create default config")
         return None
 
-    def version(self):
+    def version(self) -> None:
         """Display version information."""
-        console.print(f"Vexy PDF Werk version {self.version}")
+        console.print(f"Vexy PDF Werk version {self._version}")
 
 
-def main():
+def main() -> None:
     """Main entry point for the CLI."""
     try:
         fire.Fire(VexyPDFWerk)
     except KeyboardInterrupt:
         console.print("\n[yellow]Interrupted by user[/yellow]")
         sys.exit(1)
+    except ImportError as e:
+        console.print("[red]Import Error - Missing Dependency:[/red]")
+        console.print(f"  {e!s}")
+        console.print("\n[yellow]Installation Required:[/yellow]")
+        console.print("  • pip install vexy-pdf-werk[all]")
+        console.print("  • Or install missing system dependencies")
+        sys.exit(1)
     except Exception as e:
-        console.print(f"[red]Unexpected error: {e}[/red]")
+        error_type = type(e).__name__
+        console.print(f"[red]Unexpected Error - {error_type}:[/red]")
+        console.print(f"  {e!s}")
+        console.print("\n[yellow]This may be a bug - please report it:[/yellow]")
+        console.print("  • Include this error message")
+        console.print("  • Include your command and PDF file details")
+        console.print("  • Report at: https://github.com/vexyart/vexy-pdf-werk/issues")
         sys.exit(1)
 
 

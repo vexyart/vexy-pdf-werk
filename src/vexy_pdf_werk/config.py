@@ -3,6 +3,7 @@
 
 import os
 from pathlib import Path
+from typing import Any
 
 import toml
 from platformdirs import user_config_dir
@@ -32,6 +33,7 @@ class AIConfig(BaseModel):
     provider: str = "claude"  # claude, gemini, custom
     correction_enabled: bool = False
     enhancement_enabled: bool = False
+    structure_enhancement_enabled: bool = False
     max_tokens: int = 4000
 
 
@@ -85,17 +87,20 @@ def load_config(config_file: Path | None = None) -> VPWConfig:
         config_data = toml.load(config_file)
 
     # Apply environment variable overrides
-    env_overrides = {}
+    env_overrides: dict[str, Any] = {}
 
     # AI configuration from environment
     if api_key := os.getenv("DATALAB_API_KEY"):
-        env_overrides.setdefault("ai", {})["datalab_api_key"] = api_key
+        ai_config = env_overrides.setdefault("ai", {})
+        ai_config["datalab_api_key"] = api_key
 
     if claude_key := os.getenv("ANTHROPIC_API_KEY"):
-        env_overrides.setdefault("ai", {})["claude_api_key"] = claude_key
+        ai_config = env_overrides.setdefault("ai", {})
+        ai_config["claude_api_key"] = claude_key
 
     if gemini_key := os.getenv("GOOGLE_AI_API_KEY"):
-        env_overrides.setdefault("ai", {})["gemini_api_key"] = gemini_key
+        ai_config = env_overrides.setdefault("ai", {})
+        ai_config["gemini_api_key"] = gemini_key
 
     # Tool paths from environment
     if tesseract := os.getenv("TESSERACT_PATH"):
@@ -112,31 +117,68 @@ def load_config(config_file: Path | None = None) -> VPWConfig:
 
 def save_config(config: VPWConfig, config_file: Path | None = None) -> None:
     """
-    Save configuration to file.
+    Save configuration to file with enhanced error handling.
 
     Args:
         config: Configuration to save
         config_file: Optional path to config file
+
+    Raises:
+        PermissionError: If unable to write to config file or directory
+        OSError: If unable to create config directory
+        ValueError: If config serialization fails
     """
     if config_file is None:
         config_file = get_config_file()
 
-    # Ensure config directory exists
-    config_file.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        # Ensure config directory exists
+        config_file.parent.mkdir(parents=True, exist_ok=True)
+    except PermissionError as e:
+        msg = f"Permission denied creating config directory: {config_file.parent}"
+        raise PermissionError(msg) from e
+    except OSError as e:
+        msg = f"Failed to create config directory: {config_file.parent}"
+        raise OSError(msg) from e
 
-    # Convert to dictionary and save
-    config_dict = config.model_dump()
-    with open(config_file, 'w') as f:
-        toml.dump(config_dict, f)
+    try:
+        # Convert to dictionary and save
+        config_dict = config.model_dump()
+        with open(config_file, 'w', encoding='utf-8') as f:
+            toml.dump(config_dict, f)
+    except PermissionError as e:
+        msg = f"Permission denied writing config file: {config_file}"
+        raise PermissionError(msg) from e
+    except OSError as e:
+        msg = f"Failed to write config file: {config_file}"
+        raise OSError(msg) from e
+    except Exception as e:
+        msg = f"Failed to serialize config data: {e}"
+        raise ValueError(msg) from e
 
 
 def create_default_config() -> VPWConfig:
-    """Create and save a default configuration file."""
+    """
+    Create and save a default configuration file.
+
+    Returns:
+        Default VPW configuration
+
+    Raises:
+        PermissionError: If unable to write config file
+        OSError: If unable to create config directory
+        ValueError: If config serialization fails
+    """
     config = VPWConfig()
     config_file = get_config_file()
 
     if not config_file.exists():
-        save_config(config, config_file)
+        try:
+            save_config(config, config_file)
+        except (PermissionError, OSError, ValueError) as e:
+            # Re-raise with additional context
+            msg = f"Failed to create default config file at {config_file}: {e}"
+            raise type(e)(msg) from e
 
     return config
 

@@ -1,16 +1,22 @@
 # this_file: src/vexy_pdf_werk/core/metadata_extractor.py
 """Metadata extraction and YAML generation for PDF documents."""
 
-from dataclasses import dataclass, asdict
-from datetime import datetime
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Any
 
 import yaml
 from loguru import logger
 
-from .pdf_processor import PDFInfo
-from .markdown_converter import MarkdownResult
+from vexy_pdf_werk.core.markdown_converter import MarkdownResult
+from vexy_pdf_werk.core.pdf_processor import PDFInfo
+
+# Preview generation constants
+MAX_PREVIEW_LENGTH = 200
+MIN_PREVIEW_CONTENT_LENGTH = 100
+MIN_PREVIEW_LINES = 2
+PREVIEW_TRUNCATE_SUFFIX_LENGTH = 3  # for "..."
 
 
 @dataclass
@@ -23,23 +29,23 @@ class DocumentMetadata:
 
     # PDF metadata
     pdf_pages: int
-    pdf_title: Optional[str] = None
-    pdf_author: Optional[str] = None
-    pdf_creation_date: Optional[str] = None
+    pdf_title: str | None = None
+    pdf_author: str | None = None
+    pdf_creation_date: str | None = None
     pdf_has_text: bool = False
     pdf_is_scanned: bool = False
     pdf_has_images: bool = False
 
     # Processing information
-    formats_generated: List[str] = None
+    formats_generated: list[str] | None = None
     markdown_pages: int = 0
     processing_time_seconds: float = 0.0
 
     # Content summary
     estimated_word_count: int = 0
-    first_page_preview: Optional[str] = None
+    first_page_preview: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize mutable defaults."""
         if self.formats_generated is None:
             self.formats_generated = []
@@ -48,7 +54,7 @@ class DocumentMetadata:
 class MetadataExtractor:
     """Extracts and generates metadata for processed documents."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the metadata extractor."""
         pass
 
@@ -56,8 +62,8 @@ class MetadataExtractor:
         self,
         pdf_path: Path,
         pdf_info: PDFInfo,
-        markdown_result: Optional[MarkdownResult] = None,
-        formats_generated: Optional[List[str]] = None,
+        markdown_result: MarkdownResult | None = None,
+        formats_generated: list[str] | None = None,
         processing_time: float = 0.0
     ) -> DocumentMetadata:
         """
@@ -90,7 +96,7 @@ class MetadataExtractor:
             # Source information
             source_file=pdf_path.name,
             source_size_bytes=file_size,
-            processed_at=datetime.now().isoformat(),
+            processed_at=datetime.now(timezone.utc).isoformat(),
 
             # PDF metadata
             pdf_pages=pdf_info.pages,
@@ -171,7 +177,7 @@ class MetadataExtractor:
 
         return total_words
 
-    def _get_first_page_preview(self, markdown_result: MarkdownResult) -> Optional[str]:
+    def _get_first_page_preview(self, markdown_result: MarkdownResult) -> str | None:
         """
         Extract a preview from the first page content.
 
@@ -199,7 +205,7 @@ class MetadataExtractor:
         char_count = 0
 
         for line in lines[:5]:  # Check up to 5 lines
-            if char_count + len(line) > 200:
+            if char_count + len(line) > MAX_PREVIEW_LENGTH:
                 break
 
             # Skip markdown headers and formatting
@@ -209,7 +215,7 @@ class MetadataExtractor:
             preview_lines.append(line)
             char_count += len(line) + 1  # +1 for space
 
-            if len(preview_lines) >= 2 and char_count > 100:
+            if len(preview_lines) >= MIN_PREVIEW_LINES and char_count > MIN_PREVIEW_CONTENT_LENGTH:
                 break
 
         if not preview_lines:
@@ -218,12 +224,12 @@ class MetadataExtractor:
         preview = ' '.join(preview_lines)
 
         # Truncate if still too long
-        if len(preview) > 200:
-            preview = preview[:197] + "..."
+        if len(preview) > MAX_PREVIEW_LENGTH:
+            preview = preview[:MAX_PREVIEW_LENGTH - PREVIEW_TRUNCATE_SUFFIX_LENGTH] + "..."
 
         return preview
 
-    def _clean_metadata_dict(self, metadata_dict: Dict[str, Any]) -> Dict[str, Any]:
+    def _clean_metadata_dict(self, metadata_dict: dict[str, Any]) -> dict[str, Any]:
         """
         Clean up metadata dictionary by removing None values and organizing structure.
 

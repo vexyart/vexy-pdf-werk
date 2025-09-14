@@ -6,11 +6,11 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-import pytest
 import pikepdf
+import pytest
 
 from vexy_pdf_werk.config import VPWConfig
-from vexy_pdf_werk.core.pdf_processor import PDFProcessor, PDFInfo
+from vexy_pdf_werk.core.pdf_processor import PDFInfo, PDFProcessor
 
 
 class TestPDFProcessor:
@@ -33,8 +33,8 @@ class TestPDFProcessor:
         """Create a sample PDF file for testing."""
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
             # Create a minimal PDF using a simpler approach
-            from reportlab.pdfgen import canvas
             from reportlab.lib.pagesizes import letter
+            from reportlab.pdfgen import canvas
 
             # Create PDF with reportlab
             c = canvas.Canvas(temp_file.name, pagesize=letter)
@@ -100,8 +100,8 @@ class TestPDFProcessor:
         """Test PDF analysis handles missing metadata gracefully."""
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
             # Create PDF without metadata
-            from reportlab.pdfgen import canvas
             from reportlab.lib.pagesizes import letter
+            from reportlab.pdfgen import canvas
 
             c = canvas.Canvas(temp_file.name, pagesize=letter)
             # Don't set title/author to test missing metadata
@@ -146,8 +146,8 @@ class TestPDFProcessor:
         """Test PDF analysis performs reasonably with larger PDFs."""
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
             # Create PDF with multiple pages
-            from reportlab.pdfgen import canvas
             from reportlab.lib.pagesizes import letter
+            from reportlab.pdfgen import canvas
 
             c = canvas.Canvas(temp_file.name, pagesize=letter)
             c.setTitle('Large Test Document')
