@@ -123,18 +123,23 @@ include = [
 exclude = ["**/__pycache__", "**/.pytest_cache", "**/.mypy_cache"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/vexy_pdf_werk"]
+packages = ["src"]
 reproducible = true
 
 
 # Version control system hook configuration
 # Automatically updates the version file from git tags
 [tool.hatch.build.hooks.vcs]
-version-file = "src/vexy_pdf_werk/__version__.py"
+version-file = "src/vexy_pdf_werk/_version.py"
+template = '''
+__version__ = "{version}"
+__version_tuple__ = {version_tuple}
+'''
 
 # Version source configuration
 [tool.hatch.version]
 source = 'vcs' # Get version from git tags or other VCS info
+raw-options = { local_scheme = "no-local-version" } # Clean version format without local identifiers
 
 # Metadata handling configuration
 [tool.hatch.metadata]
@@ -146,8 +151,8 @@ allow-direct-references = true # Allow direct references in metadata (useful for
 
 [tool.hatch.envs.default]
 features = ['dev', 'test', 'all']
-dependencies = [
-]
+installer = "uv" # Use uv for fast dependency resolution and installation
+dependencies = []
 
 # Commands available in the default environment
 [tool.hatch.envs.default.scripts]
@@ -176,6 +181,7 @@ python = ["3.10", "3.11", "3.12"]
 # Dedicated environment for linting and code quality checks
 [tool.hatch.envs.lint]
 detached = true # Create a separate, isolated environment
+installer = "uv" # Use uv for fast dependency resolution
 features = ['dev'] # Use dev extras  dependencies 
 
 # Linting environment commands
@@ -193,6 +199,7 @@ all = ["style", "typing", "fix"]
 # Dedicated environment for testing
 [tool.hatch.envs.test]
 features = ['test'] # Use test extras as dependencies
+installer = "uv" # Use uv for fast dependency resolution
 
 # Testing environment commands
 [tool.hatch.envs.test.scripts]
@@ -208,6 +215,7 @@ bench-save = "python -m pytest -v -p no:briefcase tests/test_benchmark.py --benc
 # Documentation environment
 [tool.hatch.envs.docs]
 features = ['docs']
+installer = "uv" # Use uv for fast dependency resolution
 
 # Documentation environment commands
 [tool.hatch.envs.docs.scripts]
@@ -216,6 +224,7 @@ build = "sphinx-build -b html docs/source docs/build"
 # GitHub Actions workflow configuration
 [tool.hatch.envs.ci]
 features = ['test']
+installer = "uv" # Use uv for fast dependency resolution
 
 
 [tool.hatch.envs.ci.scripts]
@@ -258,7 +267,7 @@ source_pkgs = ["vexy_pdf_werk", "tests"]
 branch = true # Measure branch coverage (if/else statements)
 parallel = true # Support parallel test execution
 omit = [
-    "src/vexy_pdf_werk/__about__.py",
+    "src/vexy_pdf_werk/_version.py",
 ]
 
 #------------------------------------------------------------------------------
@@ -268,17 +277,15 @@ omit = [
 
 [tool.mypy]
 python_version = "3.10"
+strict = true # Enable all strict checks
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
+show_error_codes = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 
 [[tool.mypy.overrides]]
 module = ["tests.*"]
@@ -405,16 +412,15 @@ ignore = [
     'S106', # Possible hardcoded password - often false positives
     'S107', # Possible hardcoded password - often false positives
     'S110', # try-except-pass - sometimes valid for suppressing exceptions
-    'SIM102'
-    # Nested if statements - sometimes more readable than combined conditions
+    'SIM102', # Nested if statements - sometimes more readable than combined conditions
 ]
 # Rules that should not be automatically fixed
 unfixable = [
     'F401', # Don't automatically remove unused imports - may be needed later
 
 ]
-# Configure extend-exclude to ignore specific directories
-extend-exclude = [".git", ".venv", "venv", "dist", "build"]
+# Configure exclude to ignore specific directories
+exclude = [".git", ".venv", "venv", "dist", "build"]
 
 # isort configuration within Ruff
 [tool.ruff.lint.isort]
