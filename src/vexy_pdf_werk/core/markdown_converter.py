@@ -191,6 +191,19 @@ class BasicConverter(MarkdownConverter):
                 )
 
                 processing_time = time.time() - start_time
+
+                # Add timing to the success log
+                logger.info(
+                    f"PDF to Markdown conversion timing: {processing_time:.2f}s",
+                    extra={
+                        "input_path": str(pdf_path),
+                        "processing_time_seconds": round(processing_time, 2),
+                        "total_pages": total_pages,
+                        "pages_converted": len(pages),
+                        "process_stage": "markdown_timing"
+                    }
+                )
+
                 return MarkdownResult(
                     success=True,
                     pages=pages,

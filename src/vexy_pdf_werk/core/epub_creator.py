@@ -148,6 +148,19 @@ class EpubCreator:
                 }
             )
             processing_time = time.time() - start_time
+
+            # Add timing information to logs
+            logger.info(
+                f"ePub creation timing: {processing_time:.2f}s",
+                extra={
+                    "output_path": str(output_path),
+                    "processing_time_seconds": round(processing_time, 2),
+                    "total_chapters": len(chapters),
+                    "total_pages": len(markdown_result.pages),
+                    "process_stage": "epub_timing"
+                }
+            )
+
             return EpubCreationResult(
                 success=True,
                 output_path=output_path,
