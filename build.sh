@@ -2,6 +2,8 @@
 
 set -e
 
+hatch clean
+
 echo "Building Vexy PDF Werk..."
 
 # Build the package
@@ -14,3 +16,6 @@ uv pip install mkdocs mkdocs-material
 
 # Build the documentation
 mkdocs build
+
+gitnextver .
+

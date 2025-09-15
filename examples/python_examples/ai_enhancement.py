@@ -21,10 +21,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from vexy_pdf_werk.core.pdf_processor import PDFProcessor
 from vexy_pdf_werk.core.qdf_processor import QDFProcessor
-from vexy_pdf_werk.integrations.ai_services import AIService, ClaudeService, GeminiService
+from vexy_pdf_werk.integrations.ai_services import AIService, ClaudeCLIService, GeminiCLIService
 from vexy_pdf_werk.core.markdown_converter import MarkdownGenerator
 from vexy_pdf_werk.core.metadata_extractor import MetadataExtractor
-from vexy_pdf_werk.config import Config
+from vexy_pdf_werk.config import AIConfig
 
 
 def check_ai_prerequisites():
@@ -214,15 +214,38 @@ def process_pdf_with_ai_enhancement(pdf_path: Path, available_services: list[str
         service_name = available_services[0]
         print(f"🤖 Using AI service: {service_name}")
 
+        ai_config = AIConfig(enabled=True, provider=service_name)
+
         if service_name == "claude":
-            ai_service = ClaudeService()
+            ai_service = ClaudeCLIService(ai_config)
         else:
-            ai_service = GeminiService()
+            ai_service = GeminiCLIService(ai_config)
 
         # Analyze PDF
         print("🔍 Analyzing PDF...")
         pdf_info = pdf_processor.analyze_pdf(pdf_path)
         print(f"   ✓ Found {pdf_info.pages} pages")
+
+        # Create enhanced PDF with AI structure enhancement
+        print("🔧 Creating AI-enhanced PDF...")
+        enhanced_pdf_path = output_dir / f"{pdf_path.stem}_ai_enhanced.pdf"
+
+        # Configure the processor for AI enhancement
+        from vexy_pdf_werk.config import VPWConfig
+        config = VPWConfig()
+        config.ai.enabled = True
+        config.ai.provider = service_name
+        config.ai.structure_enhancement_enabled = True
+        processor_with_ai = PDFProcessor(config)
+
+        pdf_result = processor_with_ai.create_better_pdf(pdf_path, enhanced_pdf_path)
+
+        if pdf_result.success:
+            print(f"   ✓ AI-enhanced PDF created: {enhanced_pdf_path.name}")
+            print("   ✓ OCR processing and PDF/A conversion applied")
+            print("   ✓ AI structure enhancement applied")
+        else:
+            print(f"   ❌ AI enhancement failed: {pdf_result.error}")
 
         # Simulate AI enhancement process
         print("🧠 AI Enhancement Process:")

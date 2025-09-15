@@ -1,0 +1,19 @@
+document:
+  source_file: base64image.pdf
+  source_size_bytes: 2267027
+  processed_at: '2025-09-14T23:54:47.134992+00:00'
+  processing_time_seconds: 0.02
+pdf_info:
+  pages: 1
+  has_text: true
+  is_scanned: false
+  has_images: true
+  creation_date: D:20220920081517+02'00'
+processing:
+  formats_generated:
+  - markdown
+  - epub
+  markdown_pages: 1
+content:
+  estimated_word_count: 8
+  first_page_preview: Produced with a Trial Version of PDF Annotator - www.PDFAnnotator.com

@@ -161,8 +161,10 @@ class BasicConverter(MarkdownConverter):
 
     def _read_pdf_sync(self, pdf_path: Path) -> pypdf.PdfReader:
         """Synchronous PDF reading for use in thread executor."""
-        with open(pdf_path, "rb") as file:
-            return pypdf.PdfReader(file)
+        import io
+        with open(pdf_path, "rb") as f:
+            pdf_data = f.read()
+        return pypdf.PdfReader(io.BytesIO(pdf_data))
 
     def _clean_extracted_text(self, text: str) -> str:
         """

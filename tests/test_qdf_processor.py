@@ -3,10 +3,13 @@
 
 import asyncio
 import json
+import logging
+import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from loguru import logger
 
 from vexy_pdf_werk.core.qdf_processor import QDFProcessor
 
@@ -93,9 +96,9 @@ def test_extract_text_from_qdf(qpdf_processor, sample_qdf_json):
     """Test the extraction of text from a QDF/JSON object."""
     # The sample_qdf_json has one text stream
     expected_text = "BT /F1 12 Tf 100 750 Td (Hello World) Tj ET"
-    
+
     extracted_text = qpdf_processor.extract_text_from_qdf(sample_qdf_json)
-    
+
     assert extracted_text == expected_text
 
 
@@ -140,7 +143,7 @@ def test_apply_diff_to_qdf_addition(qpdf_processor, sample_qdf_json):
     assert "Another line" in extracted_text
 
 
-def test_apply_diff_to_qdf_deletion(qpdf_processor, sample_qdf_json):
+def test_apply_diff_to_qdf_deletion(qpdf_processor):
     """Test applying a diff that deletes lines."""
     # Create a QDF with multiple text streams for this test
     multi_stream_qdf = {
@@ -187,9 +190,6 @@ def test_apply_diff_to_qdf_no_text_content(qpdf_processor):
 
 def test_apply_diff_to_qdf_invalid_diff(qpdf_processor, sample_qdf_json, caplog):
     """Test that invalid diffs are handled gracefully."""
-    import logging
-    from loguru import logger
-
     caplog.set_level(logging.ERROR)
     handler_id = logger.add(caplog.handler, format="{message}")
 
@@ -207,29 +207,30 @@ def test_apply_diff_to_qdf_invalid_diff(qpdf_processor, sample_qdf_json, caplog)
 @pytest.mark.asyncio
 async def test_qdf_json_to_pdf_success(qpdf_processor, sample_qdf_json):
     """Test successful conversion of QDF/JSON back to a PDF."""
-    output_path = Path("/tmp/output.pdf")
-    qdf_content = json.dumps(sample_qdf_json)
+    with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+        output_path = Path(tmp.name)
+        qdf_content = json.dumps(sample_qdf_json)
 
-    with patch("asyncio.create_subprocess_exec") as mock_exec:
-        mock_proc = AsyncMock()
-        mock_proc.communicate.return_value = (b"", b"")
-        mock_proc.returncode = 0
-        mock_exec.return_value = mock_proc
+        with patch("asyncio.create_subprocess_exec") as mock_exec:
+            mock_proc = AsyncMock()
+            mock_proc.communicate.return_value = (b"", b"")
+            mock_proc.returncode = 0
+            mock_exec.return_value = mock_proc
 
-        await qpdf_processor.qdf_json_to_pdf(sample_qdf_json, output_path)
+            await qpdf_processor.qdf_json_to_pdf(sample_qdf_json, output_path)
 
-        mock_exec.assert_called_once_with(
-            qpdf_processor.qpdf_cmd,
-            "--qdf",
-            "-",
-            str(output_path),
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        
-        # Check that the correct data was sent to stdin
-        mock_proc.communicate.assert_called_once_with(input=qdf_content.encode())
+            mock_exec.assert_called_once_with(
+                qpdf_processor.qpdf_cmd,
+                "--qdf",
+                "-",
+                str(output_path),
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+
+            # Check that the correct data was sent to stdin
+            mock_proc.communicate.assert_called_once_with(input=qdf_content.encode())
 
 
 @pytest.mark.asyncio

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # this_file: examples/run_examples.py
 """
 Example runner script for Vexy PDF Werk examples.
@@ -58,24 +58,20 @@ def check_prerequisites():
     """Check if required tools are installed."""
     print_section("Checking Prerequisites")
 
-    tools = [
-        ("python3", "Python 3"),
-        ("pip", "Python package installer"),
-    ]
+    # Check Python version
+    python_version = sys.version.split()[0]
+    print(f"✅ Python: {python_version} ({sys.executable})")
 
-    all_good = True
-    for tool, description in tools:
-        try:
-            result = subprocess.run([tool, "--version"], capture_output=True, text=True)
-            if result.returncode == 0:
-                version = result.stdout.strip().split('\n')[0]
-                print(f"✅ {description}: {version}")
-            else:
-                print(f"❌ {description}: Not found")
-                all_good = False
-        except FileNotFoundError:
-            print(f"❌ {description}: Not installed")
-            all_good = False
+    # Check for uv
+    try:
+        result = subprocess.run(["uv", "--version"], capture_output=True, text=True)
+        if result.returncode == 0:
+            version = result.stdout.strip().split('\n')[0]
+            print(f"✅ uv: {version}")
+        else:
+            print("❌ uv: Not found")
+    except FileNotFoundError:
+        print("❌ uv: Not found")
 
     # Check for vexy-pdf-werk package
     try:
@@ -84,7 +80,7 @@ def check_prerequisites():
     except ImportError:
         print(f"⚠️  Vexy PDF Werk: Not installed (will use development version)")
 
-    return all_good
+    return True
 
 
 def list_available_examples():

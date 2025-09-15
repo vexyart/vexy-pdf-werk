@@ -2,9 +2,10 @@
 """Tests for metadata extraction functionality."""
 
 import tempfile
+from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -70,7 +71,6 @@ class TestDocumentMetadata:
         )
 
         # Use dataclass asdict functionality
-        from dataclasses import asdict
         metadata_dict = asdict(metadata)
 
         assert isinstance(metadata_dict, dict)
@@ -316,10 +316,13 @@ class TestMetadataExtractor:
 
         content = temp_yaml_path.read_text(encoding='utf-8')
         assert "source_file: test.pdf" in content
-        assert "pdf_title: null" in content
-        assert "estimated_word_count: null" in content
+        # Title and author are omitted from YAML when None (per _clean_metadata_dict)
+        assert "pdf_title:" not in content  # None values are filtered out
+        assert "estimated_word_count: 0" in content
 
-    def test_extract_and_save_metadata_integration(self, extractor, sample_pdf_info, sample_markdown_result, temp_yaml_path):
+    def test_extract_and_save_metadata_integration(
+        self, extractor, sample_pdf_info, sample_markdown_result, temp_yaml_path
+    ):
         """Test complete extract and save workflow."""
         pdf_path = Path("integration_test.pdf")
 
@@ -387,7 +390,11 @@ class TestMetadataExtractorEdgeCases:
     def test_get_first_page_preview_very_long_content(self, extractor):
         """Test first page preview with very long content."""
         # Create content with meaningful lines (not just repeated text in one line)
-        long_content = "This is the first line of very long content.\nThis is the second line that continues the document.\n" + ("This is additional content. " * 20)
+        long_content = (
+            "This is the first line of very long content.\n"
+            "This is the second line that continues the document.\n"
+            + ("This is additional content. " * 20)
+        )
         pages = [
             MarkdownPage(
                 page_number=0,

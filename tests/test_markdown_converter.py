@@ -1,7 +1,6 @@
 # this_file: tests/test_markdown_converter.py
 """Comprehensive unit tests for BasicConverter and markdown conversion functionality."""
 
-import asyncio
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
@@ -82,7 +81,8 @@ class TestBasicConverter:
     @pytest.fixture
     def sample_pdf_path(self):
         """Create a sample PDF path for testing."""
-        return Path("/tmp/test_sample.pdf")
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            return Path(tmp.name)
 
     def test_converter_initialization(self, converter, config):
         """Test BasicConverter initialization."""
@@ -372,12 +372,17 @@ class TestIntegrationScenarios:
 
         # Chapter page with numbered header
         chapter_page = Mock()
-        chapter_page.extract_text.return_value = "1. Introduction\n\nThis chapter covers the basics of testing methodology and best practices."
+        chapter_page.extract_text.return_value = (
+            "1. Introduction\n\nThis chapter covers the basics of testing methodology and best practices."
+        )
         mock_pages.append(chapter_page)
 
         # Regular content page
         content_page = Mock()
-        content_page.extract_text.return_value = "Testing is crucial for software quality. Here are the main principles:\n\n• Test early and often\n• Write clear test cases\n• Maintain test coverage"
+        content_page.extract_text.return_value = (
+            "Testing is crucial for software quality. Here are the main principles:\n\n"
+            "• Test early and often\n• Write clear test cases\n• Maintain test coverage"
+        )
         mock_pages.append(content_page)
 
         # Empty page
@@ -391,7 +396,8 @@ class TestIntegrationScenarios:
         with patch('builtins.open', mock_open(read_data=b'fake_pdf_data')), \
              patch('pypdf.PdfReader', return_value=mock_reader):
 
-            result = await converter.convert_pdf(Path("/tmp/complete_doc.pdf"))
+            with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+                result = await converter.convert_pdf(Path(tmp.name))
 
             assert result.success is True
             assert len(result.pages) == 4
@@ -427,8 +433,9 @@ class TestIntegrationScenarios:
         ]
 
         for error_name, error in test_cases:
-            with patch('builtins.open', side_effect=error):
-                result = await converter.convert_pdf(Path(f"/tmp/malformed_{error_name}.pdf"))
+            with patch('builtins.open', side_effect=error), \
+                 tempfile.NamedTemporaryFile(suffix=f"_malformed_{error_name}.pdf") as tmp:
+                result = await converter.convert_pdf(Path(tmp.name))
 
                 assert result.success is False
                 assert result.error is not None
@@ -439,7 +446,10 @@ class TestIntegrationScenarios:
     async def test_special_characters_handling(self, converter):
         """Test handling of special characters and encodings."""
         # Mock page with special characters
-        special_content = "Café Münchën: A Guide to Special Characters\n\nThis document contains: àáâãäåæçèéêë\nAnd symbols: ©®™€£¥§¶"
+        special_content = (
+            "Café Münchën: A Guide to Special Characters\n\n"
+            "This document contains: àáâãäåæçèéêë\nAnd symbols: ©®™€£¥§¶"
+        )
 
         mock_page = Mock()
         mock_page.extract_text.return_value = special_content
@@ -448,9 +458,10 @@ class TestIntegrationScenarios:
         mock_reader.pages = [mock_page]
 
         with patch('builtins.open', mock_open(read_data=b'fake_pdf_data')), \
-             patch('pypdf.PdfReader', return_value=mock_reader):
+             patch('pypdf.PdfReader', return_value=mock_reader), \
+             tempfile.NamedTemporaryFile(suffix="_special_chars.pdf") as tmp:
 
-            result = await converter.convert_pdf(Path("/tmp/special_chars.pdf"))
+            result = await converter.convert_pdf(Path(tmp.name))
 
             assert result.success is True
             assert len(result.pages) == 1

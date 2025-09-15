@@ -31,7 +31,7 @@
 
 ## Phase 3: Quality, Reliability & Robustness
 
-- [ ] Fix the 5 failing metadata extractor tests.
+- [x] Fix the 5 failing metadata extractor tests.
 - [ ] Clean up ruff issues in test files.
 - [ ] Improve async test patterns and mock configurations.
 - [ ] Implement structured logging for all processing stages.

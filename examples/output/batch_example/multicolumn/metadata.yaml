@@ -1,0 +1,20 @@
+document:
+  source_file: multicolumn.pdf
+  source_size_bytes: 78657
+  processed_at: '2025-09-14T23:54:47.263066+00:00'
+  processing_time_seconds: 0.06
+pdf_info:
+  pages: 3
+  has_text: true
+  is_scanned: false
+  has_images: false
+  creation_date: D:20240103093826+01'00'
+processing:
+  formats_generated:
+  - markdown
+  - epub
+  markdown_pages: 3
+content:
+  estimated_word_count: 1061
+  first_page_preview: Two-Column Document with Lorem Ipsum Your Name January 3, 2024
+    Abstract This is a sample document with two columns ﬁlled

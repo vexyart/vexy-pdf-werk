@@ -1,0 +1,174 @@
+
+============================================================
+🔧 All Examples
+============================================================
+
+📋 Checking Prerequisites
+----------------------------------------
+✅ Python: 3.12.8 (/Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/.venv/bin/python)
+✅ uv: uv 0.8.15 (8473ecba1 2025-09-03)
+✅ Vexy PDF Werk: Installed
+
+📋 Available Examples
+----------------------------------------
+🐍 Python Examples:
+   • ai_enhancement.py
+   • basic_usage.py
+   • batch_processing.py
+   • custom_config.py
+
+🐚 Shell Examples:
+   • basic_conversion.sh
+   • batch_convert.sh
+   • format_selection.sh
+
+📄 Sample Data:
+   • base64image.pdf (2.2MB)
+   • multicolumn.pdf (0.1MB)
+   • pdflatex-image.pdf (0.1MB)
+   • test1.pdf (1.3MB)
+
+📋 Running Python Examples
+----------------------------------------
+Running: Basic usage demonstration
+Command: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/.venv/bin/python /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/python_examples/basic_usage.py
+
+✅ Success!
+Output:
+🔧 Vexy PDF Werk - Basic Usage Example
+==================================================
+📄 Processing: test1.pdf
+📁 Output directory: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/output/basic_example
+
+🔍 Step 1: Analyzing PDF...
+   ✓ Pages: 3
+   ✓ Has text: True
+   ✓ Is scanned: False
+   ✓ Has images: True
+
+📝 Step 2: Converting to Markdown...
+   ✓ Successfully converted 3 pages
+   ✓ Saved: 000--drylabnewsfor-investors-friends-may-2-017.md
+   ✓ Saved: 001--holmsen-torstein-hansen...
+
+Running: Custom configuration examples
+Command: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/.venv/bin/python /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/python_examples/custom_config.py
+
+✅ Success!
+Output:
+🔧 Vexy PDF Werk - Custom Configuration Examples
+============================================================
+🔧 Basic Configuration Example
+----------------------------------------
+Configuration name: basic_demo
+OCR language: eng
+Output formats: ['markdown', 'epub', 'yaml']
+Include images: True
+
+🔧 Advanced Configuration Example
+----------------------------------------
+Configuration name: advanced_demo
+OCR languages: eng+fra
+Force OCR: True
+AI enhancement: False
+Parallel processing: True
+
+📝 Custom...
+
+Running: Batch processing demonstration
+Command: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/.venv/bin/python /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/python_examples/batch_processing.py
+
+✅ Success!
+Output:
+🔧 Vexy PDF Werk - Batch Processing Example
+==================================================
+📁 Data directory: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/data
+📁 Output directory: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/output/batch_example
+📄 Found 4 PDF files:
+   • base64image.pdf (2.2MB)
+   • test1.pdf (1.3MB)
+   • pdflatex-image.pdf (0.1MB)
+   • multicolumn.pdf (0.1MB)
+🚀 Starting batch processing of 4 PDFs
+👥 Using 1 workers
+========================...
+
+Running: AI enhancement capabilities
+Command: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/.venv/bin/python /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/python_examples/ai_enhancement.py
+
+✅ Success!
+Output:
+🤖 Vexy PDF Werk - AI Enhancement Examples
+============================================================
+🔍 Checking AI Prerequisites
+------------------------------
+Claude API key: ❌ Not set
+Gemini API key: ✓ Set
+Claude CLI: ❌ Not available
+Gemini CLI: ✓ Available
+
+🤖 AI Text Correction Example
+----------------------------------------
+Original OCR text (with errors):
+==================================================
+
+This is an exarnple of OCR text that contalns several typ0s and err0rs.
+The origin...
+
+
+📋 Running Shell Examples (Demo Mode)
+----------------------------------------
+Running: Basic CLI conversion
+Command: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/shell_examples/basic_conversion.sh --demo
+
+✅ Success!
+Output:
+🔧 Vexy PDF Werk - Basic CLI Conversion Example
+================================================
+📁 Data directory: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/shell_examples/../data
+📁 Output directory: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/shell_examples/../output/cli_basic
+
+📄 Available PDF files:
+   • base64image.pdf (2.2M)
+   • multicolumn.pdf ( 80K)
+   • pdflatex-image.pdf ( 76K)
+   • test1.pdf (1.3M)
+
+📝 Example 1: Basic Conversion
+----------------...
+
+Running: Format selection options
+Command: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/shell_examples/format_selection.sh --demo
+
+✅ Success!
+Output:
+🔧 Vexy PDF Werk - Format Selection Examples
+==============================================
+📁 Data directory: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/shell_examples/../data
+📁 Output directory: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/shell_examples/../output/cli_formats
+
+🎭 Running in demo mode (simulation only)
+
+📝 Example 1: Markdown only
+Command: vpw process "/Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/shell_examples/../data/base...
+
+Running: Batch processing
+Command: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/shell_examples/batch_convert.sh --demo
+
+✅ Success!
+Output:
+🔧 Vexy PDF Werk - Batch Processing Example
+=============================================
+📁 Data directory: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/shell_examples/../data
+📁 Output directory: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/shell_examples/../output/cli_batch
+📁 Log directory: /Users/adam/Developer/vcs/github.vexyart/vexy-pdf-werk/examples/shell_examples/../output/cli_batch/logs
+
+🎭 Running in demo mode (simulation only)
+
+📄 Found 4 PDF files to ...
+
+
+📋 Example Runner Complete
+----------------------------------------
+💡 Check the output/ directory for generated files
+📖 Read examples/README.md for detailed information

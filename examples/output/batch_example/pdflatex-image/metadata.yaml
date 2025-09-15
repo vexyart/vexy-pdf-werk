@@ -1,0 +1,21 @@
+document:
+  source_file: pdflatex-image.pdf
+  source_size_bytes: 74061
+  processed_at: '2025-09-14T23:54:47.205012+00:00'
+  processing_time_seconds: 0.02
+pdf_info:
+  pages: 1
+  has_text: true
+  is_scanned: false
+  has_images: true
+  creation_date: D:20220403194732+02'00'
+processing:
+  formats_generated:
+  - markdown
+  - epub
+  markdown_pages: 1
+content:
+  estimated_word_count: 102
+  first_page_preview: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed
+    diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed
+    diam voluptua. At vero eos et

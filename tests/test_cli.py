@@ -6,9 +6,8 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from rich.console import Console
 
-from vexy_pdf_werk.cli import VexyPDFWerk
+from vexy_pdf_werk.cli import VexyPDFWerk, main
 
 
 class TestVexyPDFWerkCLI:
@@ -96,7 +95,9 @@ class TestVexyPDFWerkCLI:
     @patch('vexy_pdf_werk.cli.validate_output_directory')
     @patch('vexy_pdf_werk.cli.validate_formats')
     @patch('vexy_pdf_werk.cli.load_config')
-    def test_process_formats_parsing(self, mock_load_config, mock_validate_formats, mock_validate_dir, mock_validate_pdf, cli):
+    def test_process_formats_parsing(
+        self, mock_load_config, mock_validate_formats, mock_validate_dir, mock_validate_pdf, cli
+    ):
         """Test process command correctly parses different format inputs."""
         # Mock all validations to pass
         mock_validate_pdf.return_value = None
@@ -119,7 +120,9 @@ class TestVexyPDFWerkCLI:
     @patch('vexy_pdf_werk.cli.validate_formats')
     @patch('vexy_pdf_werk.cli.load_config')
     @patch('vexy_pdf_werk.cli.VexyPDFWerk._run_processing_pipeline')
-    def test_process_successful_execution(self, mock_pipeline, mock_load_config, mock_validate_formats, mock_validate_dir, mock_validate_pdf, cli, capsys):
+    def test_process_successful_execution(
+        self, mock_pipeline, mock_load_config, mock_validate_formats, mock_validate_dir, mock_validate_pdf, cli, capsys
+    ):
         """Test successful process command execution."""
         # Mock all validations and processing to succeed
         mock_validate_pdf.return_value = None
@@ -136,7 +139,7 @@ class TestVexyPDFWerkCLI:
         assert "Output directory:" in captured.out
         mock_pipeline.assert_called_once()
 
-    def test_config_show_command(self, cli, capsys):
+    def test_config_show_command(self, cli):
         """Test config show command."""
         with patch('vexy_pdf_werk.cli.load_config') as mock_load, \
              patch('vexy_pdf_werk.cli.console') as mock_console:
@@ -335,7 +338,6 @@ class TestCLIEntryPoints:
     def test_main_function(self):
         """Test main function entry point."""
         with patch('vexy_pdf_werk.cli.fire.Fire') as mock_fire:
-            from vexy_pdf_werk.cli import main
             main()
             mock_fire.assert_called_once_with(VexyPDFWerk)
 

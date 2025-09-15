@@ -17,7 +17,7 @@ from vexy_pdf_werk.core.pdf_processor import PDFProcessor
 from vexy_pdf_werk.core.markdown_converter import MarkdownGenerator, BasicConverter
 from vexy_pdf_werk.core.epub_creator import EpubCreator
 from vexy_pdf_werk.core.metadata_extractor import MetadataExtractor
-from vexy_pdf_werk.config import Config
+from vexy_pdf_werk import Config
 
 
 def demonstrate_basic_config():
@@ -164,6 +164,59 @@ def process_with_custom_converter():
         print(f"❌ Error: {e}")
 
 
+def process_with_custom_pdf_enhancement():
+    """Demonstrate PDF enhancement with custom configuration."""
+    print("\n🔧 Custom PDF Enhancement Example")
+    print("-" * 40)
+
+    data_dir = Path(__file__).parent.parent / "data"
+    output_dir = Path(__file__).parent.parent / "output" / "custom_converter"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    pdf_file = data_dir / "test1.pdf"
+
+    if not pdf_file.exists():
+        print(f"❌ Sample PDF not found: {pdf_file}")
+        return
+
+    try:
+        # Create custom configuration for high-quality PDF enhancement
+        from vexy_pdf_werk.config import VPWConfig
+        config = VPWConfig()
+
+        # Customize OCR settings
+        config.processing.ocr_language = "eng"
+        config.processing.force_ocr = True  # Force OCR for demo
+        config.processing.pdf_quality = "high"
+
+        # Initialize processor with custom config
+        processor = PDFProcessor(config)
+
+        # Analyze first
+        print(f"🔍 Analyzing: {pdf_file.name}")
+        pdf_info = processor.analyze_pdf(pdf_file)
+        print(f"   ✓ Pages: {pdf_info.pages}")
+        print(f"   ✓ Has text: {pdf_info.has_text}")
+        print(f"   ✓ Is scanned: {pdf_info.is_scanned}")
+
+        # Create enhanced PDF with custom settings
+        print("🔧 Creating enhanced PDF with custom settings...")
+        enhanced_pdf_path = output_dir / f"{pdf_file.stem}_custom_enhanced.pdf"
+
+        pdf_result = processor.create_better_pdf(pdf_file, enhanced_pdf_path)
+
+        if pdf_result.success:
+            print(f"   ✓ Enhanced PDF created: {enhanced_pdf_path.name}")
+            print("   ✓ Applied custom OCR settings")
+            print("   ✓ High-quality PDF/A conversion")
+            print(f"   ✓ Processing time: {pdf_result.processing_time:.2f}s")
+        else:
+            print(f"   ❌ Enhancement failed: {pdf_result.error}")
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+
+
 def demonstrate_quality_settings():
     """Demonstrate different quality and performance settings."""
     print("\n⚡ Quality vs Performance Settings")
@@ -259,6 +312,9 @@ def main():
 
     # Show practical configuration usage
     process_with_custom_converter()
+
+    # Show PDF enhancement with custom configuration
+    process_with_custom_pdf_enhancement()
 
     # Show quality vs performance trade-offs
     demonstrate_quality_settings()

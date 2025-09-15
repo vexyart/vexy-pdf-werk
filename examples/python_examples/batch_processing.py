@@ -7,6 +7,7 @@ This script demonstrates how to process multiple PDF files efficiently,
 with progress tracking and error handling.
 """
 
+import asyncio
 import sys
 import time
 from pathlib import Path
@@ -19,7 +20,9 @@ from vexy_pdf_werk.core.pdf_processor import PDFProcessor
 from vexy_pdf_werk.core.markdown_converter import MarkdownGenerator
 from vexy_pdf_werk.core.epub_creator import EpubCreator
 from vexy_pdf_werk.core.metadata_extractor import MetadataExtractor
-from vexy_pdf_werk.config import Config
+from vexy_pdf_werk.config import VPWConfig, ConversionConfig
+
+
 
 
 class BatchProcessor:
@@ -28,10 +31,9 @@ class BatchProcessor:
     def __init__(self, output_base_dir: Path):
         """Initialize batch processor with output directory."""
         self.output_base_dir = output_base_dir
-        self.pdf_processor = PDFProcessor()
-        self.markdown_generator = MarkdownGenerator()
-        self.epub_creator = EpubCreator()
-        self.metadata_extractor = MetadataExtractor()
+        config = VPWConfig()
+        self.pdf_processor = PDFProcessor(config)
+
 
         # Processing statistics
         self.stats = {
@@ -68,10 +70,22 @@ class BatchProcessor:
             result["output_dir"] = output_dir
 
             # Step 1: Analyze PDF
-            pdf_info = self.pdf_processor.analyze_pdf(pdf_path)
+            pdf_info = asyncio.run(self.pdf_processor.analyze_pdf(pdf_path))
 
-            # Step 2: Convert to Markdown
-            markdown_result = self.markdown_generator.convert_pdf_to_markdown(pdf_path)
+            # Step 2: Create enhanced PDF
+            enhanced_pdf_path = output_dir / f"{pdf_path.stem}_enhanced.pdf"
+            pdf_result = asyncio.run(self.pdf_processor.create_better_pdf(pdf_path, enhanced_pdf_path))
+
+            if pdf_result.success:
+                result["formats_generated"].append("pdfa")
+                print(f"   ✓ Enhanced PDF: {enhanced_pdf_path.name}")
+            else:
+                print(f"   ⚠️  PDF enhancement failed: {pdf_result.error}")
+
+            # Step 3: Convert to Markdown
+            conversion_config = ConversionConfig()
+            markdown_generator = MarkdownGenerator(conversion_config)
+            markdown_result = asyncio.run(markdown_generator.generate_markdown(pdf_path, output_dir))
 
             if markdown_result.success:
                 # Save markdown files
@@ -83,22 +97,24 @@ class BatchProcessor:
                 result["formats_generated"].append("markdown")
                 print(f"   ✓ Markdown: {len(markdown_result.pages)} pages")
 
-                # Step 3: Create ePub
+                # Step 4: Create ePub
                 epub_path = output_dir / f"{pdf_path.stem}.epub"
-                epub_success = self.epub_creator.create_epub_from_markdown(
+                epub_creator = EpubCreator(book_title=pdf_info.title or pdf_path.stem, author=pdf_info.author or "Unknown Author")
+                epub_result = asyncio.run(epub_creator.create_epub(
                     markdown_result=markdown_result,
                     output_path=epub_path,
-                    title=pdf_info.title or pdf_path.stem,
-                    author=pdf_info.author or "Unknown Author"
-                )
+                    source_pdf_path=pdf_path
+                ))
+                epub_success = epub_result.success
 
                 if epub_success:
                     result["formats_generated"].append("epub")
                     print(f"   ✓ ePub: {epub_path.name}")
 
-            # Step 4: Extract and save metadata
+            # Step 5: Extract and save metadata
             processing_time = time.time() - start_time
-            metadata = self.metadata_extractor.extract_metadata(
+            metadata_extractor = MetadataExtractor()
+            metadata = metadata_extractor.extract_metadata(
                 pdf_path=pdf_path,
                 pdf_info=pdf_info,
                 markdown_result=markdown_result,
@@ -107,7 +123,7 @@ class BatchProcessor:
             )
 
             metadata_path = output_dir / "metadata.yaml"
-            self.metadata_extractor.save_metadata_yaml(metadata, metadata_path)
+            metadata_extractor.save_metadata_yaml(metadata, metadata_path)
             result["formats_generated"].append("yaml")
             print(f"   ✓ Metadata: {metadata_path.name}")
 

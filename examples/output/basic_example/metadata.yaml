@@ -1,0 +1,19 @@
+document:
+  source_file: test1.pdf
+  source_size_bytes: 1377202
+  processed_at: '2025-09-14T23:54:46.021815+00:00'
+  processing_time_seconds: 0.0
+pdf_info:
+  pages: 3
+  has_text: true
+  is_scanned: false
+  has_images: true
+processing:
+  formats_generated:
+  - markdown
+  - epub
+  markdown_pages: 3
+content:
+  estimated_word_count: 934
+  first_page_preview: DrylabNewsfor investors & friends · May 2 017 Welcome to our
+    first newsletter of 2017! It's been a while since the last one, and a lot has

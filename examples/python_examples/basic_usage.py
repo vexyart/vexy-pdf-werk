@@ -6,6 +6,7 @@ Basic usage example for Vexy PDF Werk Python API.
 This script demonstrates the simplest way to process a PDF using the library.
 """
 
+import asyncio
 import sys
 from pathlib import Path
 
@@ -16,10 +17,14 @@ from vexy_pdf_werk.core.pdf_processor import PDFProcessor
 from vexy_pdf_werk.core.markdown_converter import MarkdownGenerator
 from vexy_pdf_werk.core.epub_creator import EpubCreator
 from vexy_pdf_werk.core.metadata_extractor import MetadataExtractor
-from vexy_pdf_werk.config import Config
+from vexy_pdf_werk.config import VPWConfig, ConversionConfig
 
 
-def main():
+
+
+import asyncio
+
+async def main():
     """Demonstrate basic PDF processing workflow."""
     print("🔧 Vexy PDF Werk - Basic Usage Example")
     print("=" * 50)
@@ -45,10 +50,11 @@ def main():
     try:
         # Step 1: Initialize PDF processor
         print("\n🔍 Step 1: Analyzing PDF...")
-        processor = PDFProcessor()
+        config = VPWConfig()
+        processor = PDFProcessor(config)
 
         # Analyze the PDF
-        pdf_info = processor.analyze_pdf(pdf_file)
+        pdf_info = await processor.analyze_pdf(pdf_file)
         print(f"   ✓ Pages: {pdf_info.pages}")
         print(f"   ✓ Has text: {pdf_info.has_text}")
         print(f"   ✓ Is scanned: {pdf_info.is_scanned}")
@@ -56,10 +62,26 @@ def main():
         if pdf_info.title:
             print(f"   ✓ Title: {pdf_info.title}")
 
-        # Step 2: Convert to Markdown
-        print("\n📝 Step 2: Converting to Markdown...")
-        markdown_generator = MarkdownGenerator()
-        markdown_result = markdown_generator.convert_pdf_to_markdown(pdf_file)
+        # Step 2: Create enhanced PDF with OCR and PDF/A conversion
+        print("\n🔧 Step 2: Creating enhanced PDF...")
+        enhanced_pdf_path = output_dir / f"{pdf_file.stem}_enhanced.pdf"
+
+        pdf_result = await processor.create_better_pdf(pdf_file, enhanced_pdf_path)
+
+        if pdf_result.success:
+            print(f"   ✓ Enhanced PDF created: {enhanced_pdf_path.name}")
+            if pdf_info.is_scanned:
+                print("   ✓ OCR processing applied to scanned document")
+            print("   ✓ Converted to PDF/A format for archival")
+        else:
+            print(f"   ❌ PDF enhancement failed: {pdf_result.error}")
+            print("   ⚠️  Continuing with original PDF for other formats")
+
+        # Step 3: Convert to Markdown
+        print("\n📝 Step 3: Converting to Markdown...")
+        conversion_config = ConversionConfig()
+        markdown_generator = MarkdownGenerator(conversion_config)
+        markdown_result = await markdown_generator.generate_markdown(pdf_file, output_dir)
 
         if markdown_result.success:
             print(f"   ✓ Successfully converted {len(markdown_result.pages)} pages")
@@ -73,31 +95,33 @@ def main():
                 )
                 print(f"   ✓ Saved: {page_file.name}")
         else:
-            print("   ❌ Markdown conversion failed")
+            print(f"   ❌ Markdown conversion failed: {markdown_result.error}")
             return
 
-        # Step 3: Create ePub
-        print("\n📚 Step 3: Creating ePub...")
-        epub_creator = EpubCreator()
+        # Step 4: Create ePub
+        print("\n📚 Step 4: Creating ePub...")
+        epub_creator = EpubCreator(book_title=pdf_info.title or pdf_file.stem, author=pdf_info.author or "Unknown Author")
         epub_path = output_dir / f"{pdf_file.stem}.epub"
 
-        epub_success = epub_creator.create_epub_from_markdown(
+        epub_result = await epub_creator.create_epub(
             markdown_result=markdown_result,
             output_path=epub_path,
-            title=pdf_info.title or pdf_file.stem,
-            author=pdf_info.author or "Unknown Author"
+            source_pdf_path=pdf_file
         )
+        epub_success = epub_result.success
 
         if epub_success:
             print(f"   ✓ Created: {epub_path.name}")
         else:
             print("   ❌ ePub creation failed")
 
-        # Step 4: Extract metadata
-        print("\n📊 Step 4: Extracting metadata...")
+        # Step 5: Extract metadata
+        print("\n📊 Step 5: Extracting metadata...")
         metadata_extractor = MetadataExtractor()
 
         formats_generated = []
+        if pdf_result.success:
+            formats_generated.append("pdfa")
         if markdown_result.success:
             formats_generated.append("markdown")
         if epub_success:
@@ -119,6 +143,8 @@ def main():
         # Display summary
         print("\n🎉 Processing Complete!")
         print(f"📁 Output location: {output_dir}")
+        if pdf_result.success:
+            print(f"🔧 Enhanced PDF: {enhanced_pdf_path.name}")
         print(f"📄 Generated {len(markdown_result.pages)} markdown files")
         if epub_success:
             print(f"📚 Created ePub: {epub_path.name}")
@@ -135,4 +161,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
