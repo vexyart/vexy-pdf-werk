@@ -236,14 +236,14 @@ async def test_qdf_json_to_pdf_success(qpdf_processor, sample_qdf_json):
 @pytest.mark.asyncio
 async def test_qdf_json_to_pdf_failure(qpdf_processor, sample_qdf_json):
     """Test that a RuntimeError is raised when QDF to PDF conversion fails."""
-    output_path = Path("/tmp/output.pdf")
-    qdf_content = json.dumps(sample_qdf_json)
+    with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+        output_path = Path(tmp.name)
 
-    with patch("asyncio.create_subprocess_exec") as mock_exec:
-        mock_proc = AsyncMock()
-        mock_proc.communicate.return_value = (b"", b"qpdf error: invalid json")
-        mock_proc.returncode = 2
-        mock_exec.return_value = mock_proc
+        with patch("asyncio.create_subprocess_exec") as mock_exec:
+            mock_proc = AsyncMock()
+            mock_proc.communicate.return_value = (b"", b"qpdf error: invalid json")
+            mock_proc.returncode = 2
+            mock_exec.return_value = mock_proc
 
-        with pytest.raises(RuntimeError, match="qpdf from JSON conversion failed: qpdf error: invalid json"):
-            await qpdf_processor.qdf_json_to_pdf(sample_qdf_json, output_path)
+            with pytest.raises(RuntimeError, match="qpdf from JSON conversion failed: qpdf error: invalid json"):
+                await qpdf_processor.qdf_json_to_pdf(sample_qdf_json, output_path)

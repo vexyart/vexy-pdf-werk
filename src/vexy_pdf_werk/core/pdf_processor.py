@@ -215,11 +215,35 @@ class PDFProcessor:
         """
         start_time = time.time()
 
-        logger.info(f"Processing PDF: {pdf_path} -> {output_path}")
+        # Get file size for logging context
+        file_size_mb = pdf_path.stat().st_size / (1024 * 1024)
+
+        logger.info(
+            "Starting PDF processing",
+            extra={
+                "input_path": str(pdf_path),
+                "output_path": str(output_path),
+                "file_size_mb": round(file_size_mb, 2),
+                "process_stage": "start"
+            }
+        )
 
         try:
             # Analyze input PDF
             pdf_info = await self.analyze_pdf(pdf_path)
+
+            logger.info(
+                "PDF analysis completed",
+                extra={
+                    "input_path": str(pdf_path),
+                    "pages": pdf_info.pages,
+                    "has_text": pdf_info.has_text,
+                    "is_scanned": pdf_info.is_scanned,
+                    "has_images": pdf_info.has_images,
+                    "title": pdf_info.title,
+                    "process_stage": "analysis"
+                }
+            )
 
             if progress and task_id is not None:
                 progress.update(task_id, description="Analyzing PDF...")
@@ -233,11 +257,39 @@ class PDFProcessor:
                     if progress and task_id is not None:
                         progress.update(task_id, description="Performing OCR...")
 
+                    logger.info(
+                        "Starting OCR enhancement",
+                        extra={
+                            "input_path": str(pdf_path),
+                            "is_scanned": pdf_info.is_scanned,
+                            "force_ocr": self.processing_config.force_ocr,
+                            "ocr_language": self.processing_config.ocr_language,
+                            "process_stage": "ocr_start"
+                        }
+                    )
+
                     ocr_output = temp_path / "ocr_enhanced.pdf"
                     await self._enhance_with_ocr(pdf_path, ocr_output, pdf_info)
                     intermediate_pdf = ocr_output
+
+                    logger.info(
+                        "OCR enhancement completed",
+                        extra={
+                            "input_path": str(pdf_path),
+                            "output_path": str(ocr_output),
+                            "process_stage": "ocr_complete"
+                        }
+                    )
                 else:
-                    logger.info("PDF already has text, skipping OCR")
+                    logger.info(
+                        "Skipping OCR - PDF already has text",
+                        extra={
+                            "input_path": str(pdf_path),
+                            "has_text": pdf_info.has_text,
+                            "is_scanned": pdf_info.is_scanned,
+                            "process_stage": "ocr_skip"
+                        }
+                    )
                     intermediate_pdf = pdf_path
 
                 # Step 2: AI Enhancement (optional)
