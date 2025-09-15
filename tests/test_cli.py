@@ -57,7 +57,7 @@ class TestVexyPDFWerkCLI:
 
         assert result == 1
         captured = capsys.readouterr()
-        assert "PDF Validation Error" in captured.out
+        assert "Error:" in captured.out
         mock_validate.assert_called_once()
 
     @patch('vexy_pdf_werk.cli.validate_pdf_file')
@@ -73,7 +73,7 @@ class TestVexyPDFWerkCLI:
 
         assert result == 1
         captured = capsys.readouterr()
-        assert "Output Directory Error" in captured.out
+        assert "Error:" in captured.out
 
     @patch('vexy_pdf_werk.cli.validate_pdf_file')
     @patch('vexy_pdf_werk.cli.validate_output_directory')
@@ -89,7 +89,7 @@ class TestVexyPDFWerkCLI:
 
         assert result == 1
         captured = capsys.readouterr()
-        assert "Format Validation Error" in captured.out
+        assert "Error:" in captured.out
 
     @patch('vexy_pdf_werk.cli.validate_pdf_file')
     @patch('vexy_pdf_werk.cli.validate_output_directory')

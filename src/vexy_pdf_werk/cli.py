@@ -64,12 +64,7 @@ class VexyPDFWerk:
         try:
             validate_pdf_file(input_path)
         except (FileNotFoundError, ValueError, PermissionError) as e:
-            console.print("[red]PDF Validation Error:[/red]")
-            # Split multi-line error messages for better formatting
-            for line in str(e).split('\n'):
-                if line.strip():
-                    console.print(f"  {line.strip()}")
-            console.print("\n[yellow]Tip:[/yellow] Use 'vpw --help' for usage examples")
+            console.print(f"[red]Error:[/red] {e}")
             return 1
 
         # Set and validate output directory
@@ -78,14 +73,9 @@ class VexyPDFWerk:
         output_path = Path(output_dir)
 
         try:
-            validate_output_directory(output_path, create_if_missing=True, min_free_space_mb=50)
-        except (ValueError, PermissionError, OSError) as e:
-            console.print("[red]Output Directory Error:[/red]")
-            # Split multi-line error messages for better formatting
-            for line in str(e).split('\n'):
-                if line.strip():
-                    console.print(f"  {line.strip()}")
-            console.print("\n[yellow]Tip:[/yellow] Try using a different output directory with --output-dir")
+            validate_output_directory(output_path, create_if_missing=True)
+        except (ValueError, PermissionError) as e:
+            console.print(f"[red]Error:[/red] {e}")
             return 1
 
         console.print(f"Processing: [cyan]{input_path}[/cyan]")
@@ -101,10 +91,7 @@ class VexyPDFWerk:
         try:
             requested_formats = validate_formats(requested_formats)
         except ValueError as e:
-            console.print("[red]Format Validation Error:[/red]")
-            console.print(f"  {e!s}")
-            console.print("\n[yellow]Tip:[/yellow] Use formats like: --formats=\"markdown,epub,yaml\"")
-            console.print("[yellow]Available formats:[/yellow] pdfa, markdown, epub, yaml")
+            console.print(f"[red]Error:[/red] {e}. Available formats: pdfa, markdown, epub, yaml")
             return 1
 
         console.print(f"Requested formats: [green]{', '.join(requested_formats)}[/green]")

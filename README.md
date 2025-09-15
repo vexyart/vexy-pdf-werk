@@ -1,10 +1,8 @@
 # Vexy PDF Werk
 
-**Transform PDFs into high-quality, accessible formats with AI-enhanced processing**
+**Transform PDFs into high-quality, accessible formats**
 
-Vexy PDF Werk (VPW) is a Python package that converts PDF documents into multiple high-quality formats using modern tools and optional AI enhancement. Transform your PDFs into PDF/A archives, paginated Markdown, ePub books, and structured bibliographic metadata.
-
-- `SPEC.md` is the full specification
+Vexy PDF Werk (VPW) is a Python package that converts PDF documents into multiple high-quality formats using modern tools. Transform your PDFs into PDF/A archives, paginated Markdown, ePub books, and structured bibliographic metadata.
 
 ## Features
 
@@ -20,16 +18,18 @@ Vexy PDF Werk (VPW) is a Python package that converts PDF documents into multipl
 - Structured bibliographic YAML metadata, including estimated word count and content preview.
 - Preserves original PDF alongside enhanced versions.
 
-🤖 **Optional AI Enhancement (Future)**
-- Text correction using Claude or Gemini CLI.
-- Content structure optimization.
-- Fallback to proven traditional methods.
+🔄 **Advanced Conversion Options**
+- **Marker**: High-quality PDF-to-Markdown using state-of-the-art ML models
+- **MarkItDown**: Microsoft's robust document converter for complex layouts
+- **Docling**: IBM's advanced document understanding with structure recognition
+- **Basic**: Reliable PyPDF-based extraction for simple documents
+- Automatic fallback system - if advanced converters aren't available, falls back to basic
 
-⚙️ **Flexible Architecture**
-- Multiple conversion backends (Marker, MarkItDown, Docling, basic).
-- Platform-appropriate configuration storage (`~/.config/vexy-pdf-werk/config.toml`).
-- Robust error handling with graceful fallbacks.
-- Command-line interface for easy integration into workflows.
+⚙️ **Simple & Flexible**
+- Clean, simple CLI interface with sensible defaults
+- Platform-appropriate configuration storage
+- Graceful error handling with helpful messages
+- Easy integration into workflows
 
 ## Quick Start
 
@@ -49,20 +49,38 @@ pip install -e .
 
 The primary way to use Vexy PDF Werk is through its command-line interface, `vpw`.
 
-#### Process a PDF
+#### Basic Usage
 
 ```bash
-# Process a PDF into all default formats (pdfa, markdown, epub, yaml)
+# Convert PDF to markdown (simplest usage)
 vpw process document.pdf
 
-# Specify output directory and formats
-vpw process document.pdf --output_dir ./my-output --formats "markdown,epub"
+# Convert to multiple formats
+vpw process document.pdf --formats "pdfa,markdown,epub,yaml"
+
+# Specify output directory
+vpw process document.pdf --output_dir ./my-output
 
 # Enable verbose logging for debugging
 vpw process document.pdf --verbose
 ```
 
-#### Manage Configuration
+#### Advanced Converter Selection
+
+By default, VPW automatically selects the best available converter. You can control this:
+
+```bash
+# Use automatic converter selection (default - tries Marker → Docling → MarkItDown → Basic)
+vpw process document.pdf
+
+# Force a specific converter in your config.toml:
+# markdown_backend = "marker"    # High-quality ML-based conversion
+# markdown_backend = "docling"   # IBM's document understanding
+# markdown_backend = "markitdown" # Microsoft's robust converter
+# markdown_backend = "basic"     # Simple PyPDF extraction
+```
+
+#### Configuration Management
 
 ```bash
 # Display the current configuration
@@ -70,6 +88,35 @@ vpw config --show
 
 # Create a default configuration file if one doesn't exist
 vpw config --init
+```
+
+### Python API
+
+You can also use VPW programmatically:
+
+```python
+import asyncio
+from pathlib import Path
+from vexy_pdf_werk.config import VPWConfig
+from vexy_pdf_werk.core.markdown_converter import MarkdownGenerator
+
+async def convert_pdf():
+    # Simple conversion
+    config = VPWConfig()
+    converter = MarkdownGenerator(config.conversion)
+
+    result = await converter.generate_markdown(
+        Path("document.pdf"),
+        Path("./output")
+    )
+
+    if result.success:
+        print(f"✓ Converted {len(result.pages)} pages")
+    else:
+        print(f"✗ Error: {result.error}")
+
+# Run conversion
+asyncio.run(convert_pdf())
 ```
 
 ## Output Structure
@@ -94,11 +141,30 @@ output/
 - qpdf
 - ghostscript
 
-### Optional Dependencies
-- pandoc (for ePub generation)
-- marker-pdf (advanced PDF conversion)
-- markitdown (Microsoft's document converter)
-- docling (IBM's document understanding)
+### Optional Dependencies for Advanced Converters
+
+**Install all advanced converters:**
+```bash
+pip install vexy-pdf-werk[all]
+```
+
+**Or install specific converters:**
+```bash
+# High-quality ML-based conversion
+pip install marker-pdf
+
+# Microsoft's document converter
+pip install markitdown
+
+# IBM's document understanding
+pip install docling
+
+# ePub generation support
+pip install ebooklib
+
+# Pandoc for additional ePub features
+# (install via system package manager as shown below)
+```
 
 ### Installation Commands
 
@@ -163,18 +229,29 @@ VPW follows a modular pipeline architecture:
 
 ```
 PDF Input → Analysis → OCR Enhancement → Content Extraction → Format Generation → Multi-Format Output
-                          ↓
-                   Optional AI Enhancement
+                                              ↓
+                                   Multiple Converter Backends
+                              (Marker/Docling/MarkItDown/Basic)
 ```
 
 ### Core Components
 
-- **`PDFProcessor`**: Handles OCR, PDF/A conversion, and analysis of the PDF file. It uses `ocrmypdf` and `qpdf` for robust processing.
-- **`MarkdownGenerator`**: Converts the processed PDF into Markdown. It supports different backends (currently `basic` is implemented) and can create paginated or single-file output.
-- **`EpubCreator`**: Generates an ePub file from the Markdown content, creating chapters for each page.
-- **`MetadataExtractor`**: Extracts comprehensive metadata from the PDF and the processing results, saving it to a `metadata.yaml` file. This includes file info, PDF properties, and content summaries like word count.
-- **`cli.py`**: Provides the command-line interface using `fire`, allowing for easy configuration and execution of the processing pipeline.
-- **`config.py`**: Manages the application's configuration using `pydantic` and `toml`, with support for environment variable overrides.
+- **`PDFProcessor`**: Handles OCR, PDF/A conversion, and analysis of PDF files using `ocrmypdf` and `qpdf`.
+
+- **`MarkdownGenerator`**: Intelligent PDF-to-Markdown conversion with multiple backends:
+  - **`MarkerConverter`**: High-quality conversion using marker-pdf's ML models
+  - **`DoclingConverter`**: Advanced document understanding using IBM's docling
+  - **`MarkItDownConverter`**: Robust conversion using Microsoft's markitdown
+  - **`BasicConverter`**: Reliable fallback using PyPDF extraction
+  - Automatic backend selection and graceful fallbacks
+
+- **`EpubCreator`**: Generates ePub files from Markdown content with proper chapter structure.
+
+- **`MetadataExtractor`**: Extracts comprehensive metadata including file info, PDF properties, and content summaries.
+
+- **`CLI`**: Clean command-line interface with simple defaults and helpful error messages.
+
+- **`Config`**: Simple configuration management with sensible defaults.
 
 ## Development
 
@@ -225,11 +302,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - Built on proven tools: qpdf, OCRmyPDF, tesseract
-- Integration with cutting-edge AI services
+- Integration with advanced document conversion libraries (Marker, Docling, MarkItDown)
 - Inspired by the need for better PDF accessibility and archival
 
 ---
 
 **Project Status**: Under active development
-
-For detailed implementation specifications, see the [spec/](spec/) directory.

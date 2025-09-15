@@ -215,6 +215,18 @@ class PDFProcessor:
         """
         start_time = time.time()
 
+        # Validate input PDF first
+        try:
+            validate_pdf_file(pdf_path)
+        except (FileNotFoundError, ValueError, PermissionError) as e:
+            return ProcessingResult(
+                success=False,
+                output_path=None,
+                pdf_info=None,
+                error=str(e),
+                processing_time=time.time() - start_time
+            )
+
         # Get file size for logging context
         file_size_mb = pdf_path.stat().st_size / (1024 * 1024)
 
@@ -230,7 +242,7 @@ class PDFProcessor:
 
         try:
             # Validate output directory first
-            validate_output_directory(output_path.parent, create_if_missing=True, min_free_space_mb=100)
+            validate_output_directory(output_path.parent, create_if_missing=True)
 
             # Analyze input PDF
             pdf_info = await self.analyze_pdf(pdf_path)
