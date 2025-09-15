@@ -14,7 +14,7 @@ from rich.progress import Progress, TaskID
 
 from vexy_pdf_werk.config import VPWConfig
 from vexy_pdf_werk.utils.file_utils import find_tool_path
-from vexy_pdf_werk.utils.validation import validate_pdf_file
+from vexy_pdf_werk.utils.validation import validate_pdf_file, validate_output_directory
 from vexy_pdf_werk.integrations.ai_services import AIServiceFactory
 from .qdf_processor import QDFProcessor
 
@@ -229,6 +229,9 @@ class PDFProcessor:
         )
 
         try:
+            # Validate output directory first
+            validate_output_directory(output_path.parent, create_if_missing=True, min_free_space_mb=100)
+
             # Analyze input PDF
             pdf_info = await self.analyze_pdf(pdf_path)
 
