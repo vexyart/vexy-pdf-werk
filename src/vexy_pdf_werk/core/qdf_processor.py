@@ -35,8 +35,31 @@ class QDFProcessor:
         )
         stdout, stderr = await proc.communicate()
         if proc.returncode != 0:
+            logger.error(
+                "qpdf to JSON conversion failed",
+                extra={
+                    "pdf_path": str(pdf_path),
+                    "page_number": page_num + 1,
+                    "qpdf_cmd": self.qpdf_cmd,
+                    "return_code": proc.returncode,
+                    "error_message": stderr.decode(),
+                    "process_stage": "qdf_to_json_error"
+                }
+            )
             raise RuntimeError(f"qpdf to JSON conversion failed: {stderr.decode()}")
-        return json.loads(stdout)
+
+        qdf_data = json.loads(stdout)
+        logger.debug(
+            "PDF page converted to QDF/JSON successfully",
+            extra={
+                "pdf_path": str(pdf_path),
+                "page_number": page_num + 1,
+                "qdf_objects_count": len(qdf_data.get("objects", {})),
+                "json_size_bytes": len(stdout),
+                "process_stage": "qdf_to_json_success"
+            }
+        )
+        return qdf_data
 
     def extract_text_from_qdf(self, qdf_json: Dict[str, Any]) -> str:
         """Extracts only the text streams from a QDF/JSON object."""
@@ -52,14 +75,29 @@ class QDFProcessor:
     def apply_diff_to_qdf(self, qdf_json: Dict[str, Any], diff: str) -> Dict[str, Any]:
         """Applies a unified diff to the QDF/JSON object to update text streams."""
         if not diff or not diff.strip():
-            logger.debug("Empty diff provided, returning original QDF")
+            logger.debug(
+                "Empty diff provided, returning original QDF",
+                extra={
+                    "qdf_objects_count": len(qdf_json.get("objects", {})),
+                    "diff_provided": diff is not None,
+                    "process_stage": "qdf_diff_empty"
+                }
+            )
             return qdf_json
 
         try:
             # Extract current text content
             original_text = self.extract_text_from_qdf(qdf_json)
             if not original_text.strip():
-                logger.debug("No text content found in QDF, returning original")
+                logger.debug(
+                    "No text content found in QDF, returning original",
+                    extra={
+                        "qdf_objects_count": len(qdf_json.get("objects", {})),
+                        "original_text_length": len(original_text),
+                        "diff_lines": len(diff.split('\n')),
+                        "process_stage": "qdf_no_text_content"
+                    }
+                )
                 return qdf_json
 
             # Apply the diff to get the modified text
@@ -68,11 +106,30 @@ class QDFProcessor:
             # Update the QDF JSON with the modified text
             updated_qdf = self._update_text_streams_in_qdf(qdf_json, modified_text)
 
-            logger.debug(f"Applied diff: {len(original_text)} -> {len(modified_text)} chars")
+            logger.debug(
+                "Diff applied to QDF successfully",
+                extra={
+                    "original_text_chars": len(original_text),
+                    "modified_text_chars": len(modified_text),
+                    "text_change_chars": len(modified_text) - len(original_text),
+                    "diff_lines": len(diff.split('\n')),
+                    "qdf_objects_count": len(qdf_json.get("objects", {})),
+                    "process_stage": "qdf_diff_applied"
+                }
+            )
             return updated_qdf
 
         except Exception as e:
-            logger.error(f"Failed to apply diff to QDF: {e}")
+            logger.error(
+                "Failed to apply diff to QDF",
+                extra={
+                    "qdf_objects_count": len(qdf_json.get("objects", {})),
+                    "diff_lines": len(diff.split('\n')),
+                    "error_message": str(e),
+                    "error_type": type(e).__name__,
+                    "process_stage": "qdf_diff_error"
+                }
+            )
             return qdf_json
 
     async def qdf_json_to_pdf(self, qdf_json: Dict[str, Any], output_path: Path):
@@ -92,7 +149,30 @@ class QDFProcessor:
         )
         stdout, stderr = await proc.communicate(input=qdf_content.encode())
         if proc.returncode != 0:
+            logger.error(
+                "qpdf from JSON conversion failed",
+                extra={
+                    "output_path": str(output_path),
+                    "qdf_objects_count": len(qdf_json.get("objects", {})),
+                    "qdf_content_size_bytes": len(qdf_content.encode()),
+                    "qpdf_cmd": self.qpdf_cmd,
+                    "return_code": proc.returncode,
+                    "error_message": stderr.decode(),
+                    "process_stage": "qdf_to_pdf_error"
+                }
+            )
             raise RuntimeError(f"qpdf from JSON conversion failed: {stderr.decode()}")
+
+        # Log successful conversion
+        logger.debug(
+            "QDF/JSON converted to PDF successfully",
+            extra={
+                "output_path": str(output_path),
+                "qdf_objects_count": len(qdf_json.get("objects", {})),
+                "qdf_content_size_bytes": len(qdf_content.encode()),
+                "process_stage": "qdf_to_pdf_success"
+            }
+        )
 
     def _apply_unified_diff(self, original_text: str, diff: str) -> str:
         """Applies a unified diff to text and returns the modified version."""
@@ -107,7 +187,15 @@ class QDFProcessor:
             diff_lines.append(line)
 
         if not diff_lines:
-            logger.debug("No actual diff content found")
+            logger.debug(
+                "No actual diff content found after parsing",
+                extra={
+                    "original_text_chars": len(original_text),
+                    "diff_total_lines": len(lines),
+                    "diff_content_lines": len(diff_lines),
+                    "process_stage": "qdf_diff_no_content"
+                }
+            )
             return original_text
 
         # Simple approach: collect all additions and deletions

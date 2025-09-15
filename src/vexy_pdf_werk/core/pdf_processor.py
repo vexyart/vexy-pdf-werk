@@ -325,7 +325,22 @@ class PDFProcessor:
                     raise RuntimeError(msg)
 
                 processing_time = time.time() - start_time
-                logger.success(f"PDF processing completed in {processing_time:.2f}s")
+                output_size_mb = output_path.stat().st_size / (1024 * 1024)
+
+                logger.success(
+                    "PDF processing completed successfully",
+                    extra={
+                        "input_path": str(pdf_path),
+                        "output_path": str(output_path),
+                        "input_size_mb": round(file_size_mb, 2),
+                        "output_size_mb": round(output_size_mb, 2),
+                        "processing_time_seconds": round(processing_time, 2),
+                        "pages_processed": pdf_info.pages,
+                        "ocr_applied": pdf_info.is_scanned or self.processing_config.force_ocr,
+                        "ai_enhancement": self.ai_config.enabled,
+                        "process_stage": "complete_success"
+                    }
+                )
 
                 return ProcessingResult(
                     success=True,
@@ -336,7 +351,18 @@ class PDFProcessor:
 
         except Exception as e:
             processing_time = time.time() - start_time
-            logger.error(f"PDF processing failed after {processing_time:.2f}s: {e}")
+            logger.error(
+                "PDF processing failed",
+                extra={
+                    "input_path": str(pdf_path),
+                    "output_path": str(output_path),
+                    "file_size_mb": round(file_size_mb, 2),
+                    "processing_time_seconds": round(processing_time, 2),
+                    "error_message": str(e),
+                    "error_type": type(e).__name__,
+                    "process_stage": "complete_error"
+                }
+            )
             return ProcessingResult(
                 success=False,
                 error=str(e),

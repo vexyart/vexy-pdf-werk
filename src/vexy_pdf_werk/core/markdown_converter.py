@@ -102,7 +102,18 @@ class BasicConverter(MarkdownConverter):
         Returns:
             Conversion result with markdown pages
         """
-        logger.info(f"Converting PDF to Markdown: {pdf_path}")
+        # Get file size for logging context
+        file_size_mb = pdf_path.stat().st_size / (1024 * 1024)
+
+        logger.info(
+            "Starting PDF to Markdown conversion",
+            extra={
+                "input_path": str(pdf_path),
+                "file_size_mb": round(file_size_mb, 2),
+                "converter": self.__class__.__name__,
+                "process_stage": "markdown_start"
+            }
+        )
 
         try:
             pages = []
@@ -113,7 +124,15 @@ class BasicConverter(MarkdownConverter):
                 pdf_reader = await loop.run_in_executor(executor, self._read_pdf_sync, pdf_path)
 
                 total_pages = len(pdf_reader.pages)
-                logger.debug(f"Processing {total_pages} pages")
+                logger.info(
+                    "PDF loaded for conversion",
+                    extra={
+                        "input_path": str(pdf_path),
+                        "total_pages": total_pages,
+                        "converter": self.__class__.__name__,
+                        "process_stage": "markdown_loaded"
+                    }
+                )
 
                 for page_num, page in enumerate(pdf_reader.pages):
                     try:
@@ -151,12 +170,36 @@ class BasicConverter(MarkdownConverter):
                             )
                         )
 
-                logger.success(f"Converted {len(pages)} pages to markdown")
+                # Calculate total word count for logging
+                total_words = sum(len(page.content.split()) for page in pages)
+
+                logger.success(
+                    "PDF to Markdown conversion completed successfully",
+                    extra={
+                        "input_path": str(pdf_path),
+                        "total_pages": total_pages,
+                        "pages_converted": len(pages),
+                        "total_words": total_words,
+                        "converter": self.__class__.__name__,
+                        "file_size_mb": round(file_size_mb, 2),
+                        "process_stage": "markdown_success"
+                    }
+                )
 
                 return MarkdownResult(success=True, pages=pages, total_pages=total_pages)
 
         except Exception as e:
-            logger.error(f"Failed to convert PDF to markdown: {e}")
+            logger.error(
+                "PDF to Markdown conversion failed",
+                extra={
+                    "input_path": str(pdf_path),
+                    "file_size_mb": round(file_size_mb, 2),
+                    "converter": self.__class__.__name__,
+                    "error_message": str(e),
+                    "error_type": type(e).__name__,
+                    "process_stage": "markdown_error"
+                }
+            )
             return MarkdownResult(success=False, pages=[], error=str(e))
 
     def _read_pdf_sync(self, pdf_path: Path) -> pypdf.PdfReader:

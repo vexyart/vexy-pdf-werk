@@ -93,10 +93,8 @@ test = [
 ]
 
 docs = [
-    "sphinx>=7.2.6",
-    "sphinx-rtd-theme>=2.0.0",
-    "sphinx-autodoc-typehints>=2.0.0",
-    "myst-parser>=3.0.0", # Markdown support in Sphinx
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
 ]
 
 # All optional dependencies combined
@@ -235,11 +233,10 @@ bench-save = "python -m pytest -v -p no:briefcase tests/test_benchmark.py --benc
 # Documentation environment
 [tool.hatch.envs.docs]
 features = ['docs']
-installer = "uv" # Use uv for fast dependency resolution
+installer = "uv"
 
-# Documentation environment commands
 [tool.hatch.envs.docs.scripts]
-build = "sphinx-build -b html docs/source docs/build"
+build = "mkdocs build -f mkdocs.yml -d docs"
 
 # GitHub Actions workflow configuration
 [tool.hatch.envs.ci]

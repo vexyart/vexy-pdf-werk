@@ -79,7 +79,17 @@ class MetadataExtractor:
         Returns:
             Complete document metadata
         """
-        logger.debug(f"Extracting metadata for {pdf_path}")
+        logger.debug(
+            "Starting metadata extraction",
+            extra={
+                "pdf_path": str(pdf_path),
+                "pdf_pages": pdf_info.pages,
+                "has_markdown_result": markdown_result is not None and markdown_result.success,
+                "formats_generated": formats_generated or [],
+                "processing_time": round(processing_time, 2),
+                "process_stage": "metadata_start"
+            }
+        )
 
         # Get file size
         file_size = pdf_path.stat().st_size if pdf_path.exists() else 0
@@ -117,7 +127,19 @@ class MetadataExtractor:
             first_page_preview=first_page_preview
         )
 
-        logger.debug(f"Extracted metadata with {word_count} estimated words")
+        logger.debug(
+            "Metadata extraction completed",
+            extra={
+                "pdf_path": str(pdf_path),
+                "file_size_bytes": file_size,
+                "estimated_word_count": word_count,
+                "markdown_pages": len(markdown_result.pages) if markdown_result else 0,
+                "formats_generated": formats_generated or [],
+                "has_preview": first_page_preview is not None,
+                "preview_length": len(first_page_preview) if first_page_preview else 0,
+                "process_stage": "metadata_complete"
+            }
+        )
         return metadata
 
     def save_metadata_yaml(self, metadata: DocumentMetadata, output_path: Path) -> None:
@@ -146,10 +168,32 @@ class MetadataExtractor:
                     sort_keys=False
                 )
 
-            logger.debug(f"Saved metadata to {output_path}")
+            # Get file size for logging context
+            yaml_file_size = output_path.stat().st_size
+
+            logger.debug(
+                "Metadata YAML file saved successfully",
+                extra={
+                    "output_path": str(output_path),
+                    "yaml_file_size_bytes": yaml_file_size,
+                    "source_file": metadata.source_file,
+                    "estimated_word_count": metadata.estimated_word_count,
+                    "formats_generated": metadata.formats_generated,
+                    "process_stage": "metadata_yaml_success"
+                }
+            )
 
         except Exception as e:
-            logger.error(f"Failed to save metadata YAML: {e}")
+            logger.error(
+                "Failed to save metadata YAML file",
+                extra={
+                    "output_path": str(output_path),
+                    "source_file": metadata.source_file,
+                    "error_message": str(e),
+                    "error_type": type(e).__name__,
+                    "process_stage": "metadata_yaml_error"
+                }
+            )
             raise
 
     def _calculate_word_count(self, markdown_result: MarkdownResult) -> int:

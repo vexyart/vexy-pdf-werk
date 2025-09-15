@@ -58,7 +58,19 @@ class EpubCreator:
             )
 
         try:
-            logger.info(f"Creating ePub from {len(markdown_result.pages)} markdown pages")
+            # Calculate total content size for logging context
+            total_content_chars = sum(len(page.content) for page in markdown_result.pages)
+
+            logger.info(
+                "Starting ePub creation from markdown pages",
+                extra={
+                    "output_path": str(output_path),
+                    "total_pages": len(markdown_result.pages),
+                    "total_content_chars": total_content_chars,
+                    "source_pdf": str(source_pdf_path) if source_pdf_path else None,
+                    "process_stage": "epub_start"
+                }
+            )
 
             # Create ePub book
             book = epub.EpubBook()
@@ -76,15 +88,28 @@ class EpubCreator:
 
             for page in markdown_result.pages:
                 logger.debug(
-                    f"Creating chapter for page {page.page_number}: "
-                    f"{len(page.content)} chars, content: {page.content[:100]!r}"
+                    "Creating ePub chapter from markdown page",
+                    extra={
+                        "page_number": page.page_number + 1,
+                        "page_title": page.title,
+                        "page_slug": page.slug,
+                        "content_chars": len(page.content),
+                        "content_preview": page.content[:100] if page.content else "",
+                        "process_stage": "epub_chapter_creation"
+                    }
                 )
                 chapter = self._create_chapter_from_page(page)
                 book.add_item(chapter)
                 chapters.append(chapter)
                 spine.append(chapter)
 
-            logger.debug(f"Created {len(chapters)} chapters for ePub")
+            logger.debug(
+                "ePub chapters created successfully",
+                extra={
+                    "total_chapters": len(chapters),
+                    "process_stage": "epub_chapters_complete"
+                }
+            )
 
             # Define Table of Contents
             book.toc = chapters
@@ -102,12 +127,35 @@ class EpubCreator:
             # Write ePub file
             epub.write_epub(str(output_path), book)
 
-            logger.success(f"ePub created successfully: {output_path}")
+            # Get file size for logging context
+            file_size_mb = output_path.stat().st_size / (1024 * 1024)
+
+            logger.success(
+                "ePub creation completed successfully",
+                extra={
+                    "output_path": str(output_path),
+                    "file_size_mb": round(file_size_mb, 2),
+                    "total_chapters": len(chapters),
+                    "total_pages": len(markdown_result.pages),
+                    "book_title": book_title,
+                    "process_stage": "epub_success"
+                }
+            )
             return EpubCreationResult(success=True, output_path=output_path)
 
         except Exception as e:
             error_msg = f"ePub creation failed: {e}"
-            logger.error(error_msg)
+            logger.error(
+                "ePub creation failed",
+                extra={
+                    "output_path": str(output_path),
+                    "total_pages": len(markdown_result.pages),
+                    "source_pdf": str(source_pdf_path) if source_pdf_path else None,
+                    "error_message": str(e),
+                    "error_type": type(e).__name__,
+                    "process_stage": "epub_error"
+                }
+            )
             return EpubCreationResult(success=False, error=error_msg)
 
     def _determine_book_title(
@@ -147,7 +195,15 @@ class EpubCreator:
 
         # Convert markdown to HTML (basic conversion)
         html_content = self._markdown_to_html(page.content, page.title)
-        logger.debug(f"Generated HTML content length: {len(html_content)} chars")
+        logger.debug(
+            "Generated HTML content for ePub chapter",
+            extra={
+                "page_number": page.page_number + 1,
+                "html_content_chars": len(html_content),
+                "chapter_filename": chapter_filename,
+                "process_stage": "epub_html_conversion"
+            }
+        )
 
         # Create chapter
         chapter = epub.EpubHtml(
@@ -157,7 +213,15 @@ class EpubCreator:
         )
 
         chapter.content = html_content.encode('utf-8')
-        logger.debug(f"Chapter content set: {len(chapter.content) if chapter.content else 0} bytes")
+        logger.debug(
+            "ePub chapter content finalized",
+            extra={
+                "page_number": page.page_number + 1,
+                "chapter_title": chapter.title,
+                "content_bytes": len(chapter.content) if chapter.content else 0,
+                "process_stage": "epub_chapter_finalized"
+            }
+        )
         return chapter
 
     def _markdown_to_html(self, markdown_content: str, title: str | None = None) -> str:
