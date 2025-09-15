@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Placeholder for future changes
+
+## [1.2.0] - Major Simplification & Enterprise Feature Removal - 2025-09-15
+
 ### Changed - Enterprise Feature Removal & Simplification ✅
 - **Validation Simplification**: Removed enterprise disk space validation and health checks
   - Simplified `validation.py` from 329 lines to 89 lines (73% reduction)

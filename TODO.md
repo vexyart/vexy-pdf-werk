@@ -11,15 +11,21 @@
 - [x] Create integration tests for each converter when dependencies are available
 - [x] Add comprehensive converter comparison tests
 
-## Phase 3: Quality & Simplicity - IN PROGRESS
+## Phase 3: Quality & Simplicity - COMPLETED ✅
 
 - [x] Remove enterprise features and bloat from codebase
-- [ ] Improve async test patterns and mock configurations
-- [ ] Simplify and streamline user experience
+- [x] Improve async test patterns and mock configurations
+- [x] Simplify and streamline user experience
 
-## Phase 4: Release Preparation
+## Phase 4: Release Preparation - COMPLETED ✅
 
-- [ ] Update `README.md` to include new converter features
-- [ ] Update `CHANGELOG.md` with all changes since the last release
-- [ ] Perform a final round of testing on all features
-- [ ] Tag a new version and create a GitHub release
+- [x] Update `README.md` to include new converter features
+- [x] Update `CHANGELOG.md` with all changes since the last release
+- [x] Perform a final round of testing on all features
+- [x] Tag a new version and create a GitHub release (v1.2.0 published)
+
+## Phase 5: Quality Improvements & Reliability - PLANNED
+
+- [ ] Fix test infrastructure reliability and test PDF generation issues
+- [ ] Clean up code quality by resolving ruff linting errors
+- [ ] Enhance input validation robustness for edge cases

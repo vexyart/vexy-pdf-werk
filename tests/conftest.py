@@ -18,16 +18,43 @@ def config() -> ConversionConfig:
     return ConversionConfig()
 
 
+def create_valid_test_pdf(file_path: Path, content: str = "Test PDF Content") -> None:
+    """Create a valid PDF file for testing using reportlab."""
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+
+    # Create a proper PDF with reportlab - this should always work since reportlab is a dependency
+    c = canvas.Canvas(str(file_path), pagesize=letter)
+    c.drawString(100, 750, content)
+    c.drawString(100, 730, "This is a test PDF file.")
+    c.drawString(100, 710, "Created for testing purposes.")
+    c.save()
+
+    # Verify the PDF was created correctly
+    if not file_path.exists() or file_path.stat().st_size == 0:
+        raise RuntimeError(f"Failed to create valid test PDF at {file_path}")
+
+    # Quick validation with pikepdf
+    try:
+        import pikepdf
+        with pikepdf.open(file_path) as pdf:
+            if len(pdf.pages) == 0:
+                raise RuntimeError(f"Created PDF has no pages: {file_path}")
+    except Exception as e:
+        raise RuntimeError(f"Created PDF failed validation: {e}") from e
+
+
 @pytest.fixture
 def sample_pdf_path() -> Generator[Path, None, None]:
     """Create a temporary PDF file path for testing."""
     with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
-        tmp.write(b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\nxref\n0 1\n0000000000 65535 f\ntrailer\n<< /Size 1 /Root 1 0 R >>\nstartxref\n9\n%%EOF')
-        tmp.flush()
-        yield Path(tmp.name)
+        pdf_path = Path(tmp.name)
+
+    create_valid_test_pdf(pdf_path)
+    yield pdf_path
 
     # Cleanup
-    Path(tmp.name).unlink(missing_ok=True)
+    pdf_path.unlink(missing_ok=True)
 
 
 @pytest.fixture
@@ -83,16 +110,32 @@ def async_file_operations():
     """Mock async file operations consistently."""
     class AsyncFileMock:
         def __init__(self):
-            self.aopen = AsyncMock()
+            self.aopen = self._create_async_context_manager()
             self.mkdir = Mock()
 
+        def _create_async_context_manager(self):
+            """Create a proper async context manager mock."""
+            class AsyncContextManager:
+                def __init__(self):
+                    self.file_mock = AsyncMock()
+                    self.file_mock.write = AsyncMock()
+                    self.file_mock.read = AsyncMock(return_value="mock content")
+
+                async def __aenter__(self):
+                    return self.file_mock
+
+                async def __aexit__(self, exc_type, exc_val, exc_tb):
+                    return None
+
+            def create_context_manager(*args, **kwargs):
+                return AsyncContextManager()
+
+            aopen_mock = Mock(side_effect=create_context_manager)
+            return aopen_mock
+
         def setup_successful_write(self):
-            mock_file = AsyncMock()
-            mock_file.__aenter__.return_value = mock_file
-            mock_file.__aexit__.return_value = None
-            mock_file.write = AsyncMock()
-            self.aopen.return_value = mock_file
-            return mock_file
+            """Setup for successful file write operations."""
+            return self.aopen
 
     return AsyncFileMock
 
