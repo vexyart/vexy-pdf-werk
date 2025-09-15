@@ -1,16 +1,18 @@
 # this_file: tests/test_pdf_integration.py
 """Integration tests for PDF processing pipeline."""
 
-import asyncio
+import shutil
 import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
-import pikepdf
 import pytest
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from rich.progress import Progress
 
 from vexy_pdf_werk.config import VPWConfig
-from vexy_pdf_werk.core.pdf_processor import PDFProcessor, ProcessingResult
+from vexy_pdf_werk.core.pdf_processor import PDFProcessor
 
 
 class TestPDFProcessingIntegration:
@@ -34,8 +36,6 @@ class TestPDFProcessingIntegration:
     def sample_pdf(self):
         """Create a sample PDF file for testing."""
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
-            from reportlab.lib.pagesizes import letter
-            from reportlab.pdfgen import canvas
 
             # Create PDF with reportlab
             c = canvas.Canvas(temp_file.name, pagesize=letter)
@@ -60,7 +60,7 @@ class TestPDFProcessingIntegration:
             # Mock external tool calls to simulate success
             with patch('asyncio.create_subprocess_exec') as mock_exec:
 
-                def mock_subprocess(*args, **kwargs):
+                def mock_subprocess(*_args, **_kwargs):
                     # Create mock process that also creates the expected output file
                     mock_process = AsyncMock()
                     mock_process.communicate.return_value = (b"Success", b"")
@@ -68,7 +68,6 @@ class TestPDFProcessingIntegration:
 
                     # Always create the final output file to simulate successful processing
                     # This simulates what qpdf/ocrmypdf would do
-                    import shutil
                     if not output_path.exists():
                         shutil.copy2(sample_pdf, output_path)
 
@@ -100,13 +99,13 @@ class TestPDFProcessingIntegration:
 
             with patch('asyncio.create_subprocess_exec') as mock_exec:
 
-                def mock_subprocess_ocr(*args, **kwargs):
+                def mock_subprocess_ocr(*_args, **_kwargs):
                     mock_process = AsyncMock()
                     mock_process.communicate.return_value = (b"OCR Success", b"")
                     mock_process.returncode = 0
 
                     # Create output files - handle both ocrmypdf and qpdf commands
-                    command_args = args
+                    command_args = _args
                     if len(command_args) >= 2:
                         # For qpdf: [qpdf, --linearize, --object-streams=generate, input, output]
                         # For ocrmypdf: [ocrmypdf, options..., input, output]
@@ -115,7 +114,6 @@ class TestPDFProcessingIntegration:
                         input_file = Path(command_args[-2])
 
                         if input_file.exists() and not output_file.exists():
-                            import shutil
                             output_file.parent.mkdir(parents=True, exist_ok=True)
                             shutil.copy2(input_file, output_file)
 
@@ -154,19 +152,18 @@ class TestPDFProcessingIntegration:
             output_path = Path(temp_dir) / "enhanced_ai.pdf"
 
             with patch('asyncio.create_subprocess_exec') as mock_exec:
-                def mock_subprocess_ai(*args, **kwargs):
+                def mock_subprocess_ai(*_args, **_kwargs):
                     mock_process = AsyncMock()
                     mock_process.communicate.return_value = (b"Success", b"")
                     mock_process.returncode = 0
 
                     # Simulate file creation for any external tool calls
-                    command_args = args
+                    command_args = _args
                     if len(command_args) >= 2:
                         output_file = Path(command_args[-1])
                         input_file = Path(command_args[-2])
 
                         if input_file.exists() and not output_file.exists():
-                            import shutil
                             output_file.parent.mkdir(parents=True, exist_ok=True)
                             shutil.copy2(input_file, output_file)
 
@@ -209,9 +206,9 @@ class TestPDFProcessingIntegration:
             output_path = Path(temp_dir) / "failed_qpdf.pdf"
 
             with patch('asyncio.create_subprocess_exec') as mock_exec:
-                def mock_subprocess(*args, **kwargs):
+                def mock_subprocess(*_args, **_kwargs):
                     # Return success for OCRmyPDF, failure for qpdf
-                    command = args[0]
+                    command = _args[0]
                     mock_process = AsyncMock()
 
                     if any('ocrmypdf' in str(arg) for arg in command):
@@ -238,17 +235,21 @@ class TestPDFProcessingIntegration:
     async def test_create_better_pdf_invalid_input(self, processor):
         """Test PDF enhancement with invalid input file."""
         invalid_path = Path("/nonexistent/file.pdf")
-        output_path = Path("/tmp/output.pdf")
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_output:
+            output_path = Path(temp_output.name)
 
-        result = await processor.create_better_pdf(invalid_path, output_path)
+            result = await processor.create_better_pdf(invalid_path, output_path)
 
-        assert result.success is False
-        assert result.error is not None
+            assert result.success is False
+            assert result.error is not None
+
+            # Cleanup
+            if output_path.exists():
+                output_path.unlink()
 
     @pytest.mark.asyncio
     async def test_create_better_pdf_progress_tracking(self, processor, sample_pdf):
         """Test PDF enhancement with progress tracking."""
-        from rich.progress import Progress
 
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "progress_test.pdf"
@@ -258,19 +259,18 @@ class TestPDFProcessingIntegration:
             task_id = "test_task"
 
             with patch('asyncio.create_subprocess_exec') as mock_exec:
-                def mock_subprocess_progress(*args, **kwargs):
+                def mock_subprocess_progress(*_args, **_kwargs):
                     mock_process = AsyncMock()
                     mock_process.communicate.return_value = (b"Success", b"")
                     mock_process.returncode = 0
 
                     # Simulate file creation for any external tool calls
-                    command_args = args
+                    command_args = _args
                     if len(command_args) >= 2:
                         output_file = Path(command_args[-1])
                         input_file = Path(command_args[-2])
 
                         if input_file.exists() and not output_file.exists():
-                            import shutil
                             output_file.parent.mkdir(parents=True, exist_ok=True)
                             shutil.copy2(input_file, output_file)
 
@@ -294,19 +294,18 @@ class TestPDFProcessingIntegration:
             output_path = Path(temp_dir) / "metadata_test.pdf"
 
             with patch('asyncio.create_subprocess_exec') as mock_exec:
-                def mock_subprocess_metadata(*args, **kwargs):
+                def mock_subprocess_metadata(*_args, **_kwargs):
                     mock_process = AsyncMock()
                     mock_process.communicate.return_value = (b"Success", b"")
                     mock_process.returncode = 0
 
                     # Simulate file creation for any external tool calls
-                    command_args = args
+                    command_args = _args
                     if len(command_args) >= 2:
                         output_file = Path(command_args[-1])
                         input_file = Path(command_args[-2])
 
                         if input_file.exists() and not output_file.exists():
-                            import shutil
                             output_file.parent.mkdir(parents=True, exist_ok=True)
                             shutil.copy2(input_file, output_file)
 
@@ -329,19 +328,18 @@ class TestPDFProcessingIntegration:
             output_path = Path(temp_dir) / "cleanup_test.pdf"
 
             with patch('asyncio.create_subprocess_exec') as mock_exec:
-                def mock_subprocess_cleanup(*args, **kwargs):
+                def mock_subprocess_cleanup(*_args, **_kwargs):
                     mock_process = AsyncMock()
                     mock_process.communicate.return_value = (b"Success", b"")
                     mock_process.returncode = 0
 
                     # Simulate file creation for any external tool calls
-                    command_args = args
+                    command_args = _args
                     if len(command_args) >= 2:
                         output_file = Path(command_args[-1])
                         input_file = Path(command_args[-2])
 
                         if input_file.exists() and not output_file.exists():
-                            import shutil
                             output_file.parent.mkdir(parents=True, exist_ok=True)
                             shutil.copy2(input_file, output_file)
 

@@ -1,13 +1,16 @@
 # this_file: tests/test_pdf_processor.py
 """Tests for PDF processor functionality."""
 
-import asyncio
+import logging
 import tempfile
+import time
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, patch
 
-import pikepdf
 import pytest
+from loguru import logger
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 from vexy_pdf_werk.config import VPWConfig
 from vexy_pdf_werk.core.pdf_processor import PDFInfo, PDFProcessor
@@ -33,8 +36,6 @@ class TestPDFProcessor:
         """Create a sample PDF file for testing."""
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
             # Create a minimal PDF using a simpler approach
-            from reportlab.lib.pagesizes import letter
-            from reportlab.pdfgen import canvas
 
             # Create PDF with reportlab
             c = canvas.Canvas(temp_file.name, pagesize=letter)
@@ -100,8 +101,6 @@ class TestPDFProcessor:
         """Test PDF analysis handles missing metadata gracefully."""
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
             # Create PDF without metadata
-            from reportlab.lib.pagesizes import letter
-            from reportlab.pdfgen import canvas
 
             c = canvas.Canvas(temp_file.name, pagesize=letter)
             # Don't set title/author to test missing metadata
@@ -126,7 +125,7 @@ class TestPDFProcessor:
         with patch('vexy_pdf_werk.core.pdf_processor.find_tool_path') as mock_find_tool:
             mock_find_tool.return_value = None  # Tool not found
 
-            with pytest.raises(RuntimeError, match="Required tool.*not found"):
+            with pytest.raises(RuntimeError, match=r"Required tool.*not found"):
                 PDFProcessor(config)
 
     def test_processor_initialization_with_custom_tool_paths(self):
@@ -146,8 +145,6 @@ class TestPDFProcessor:
         """Test PDF analysis performs reasonably with larger PDFs."""
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
             # Create PDF with multiple pages
-            from reportlab.lib.pagesizes import letter
-            from reportlab.pdfgen import canvas
 
             c = canvas.Canvas(temp_file.name, pagesize=letter)
             c.setTitle('Large Test Document')
@@ -162,7 +159,6 @@ class TestPDFProcessor:
             pdf_path = Path(temp_file.name)
 
             try:
-                import time
                 start_time = time.time()
 
                 pdf_info = await processor.analyze_pdf(pdf_path)
@@ -222,8 +218,8 @@ class TestPDFInfoDataClass:
         assert pdf_info.creation_date is None
 
 
-class TestPDFProcessor:
-    """Test cases for PDFProcessor class."""
+class TestPDFProcessorAdvanced:
+    """Advanced test cases for PDFProcessor class."""
 
     @pytest.fixture
     def config(self):
@@ -242,8 +238,6 @@ class TestPDFProcessor:
         """Create a sample PDF file for testing."""
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
             # Create a minimal PDF using a simpler approach
-            from reportlab.lib.pagesizes import letter
-            from reportlab.pdfgen import canvas
 
             # Create PDF with reportlab
             c = canvas.Canvas(temp_file.name, pagesize=letter)
@@ -309,8 +303,6 @@ class TestPDFProcessor:
         """Test PDF analysis handles missing metadata gracefully."""
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
             # Create PDF without metadata
-            from reportlab.lib.pagesizes import letter
-            from reportlab.pdfgen import canvas
 
             c = canvas.Canvas(temp_file.name, pagesize=letter)
             # Don't set title/author to test missing metadata
@@ -335,7 +327,7 @@ class TestPDFProcessor:
         with patch('vexy_pdf_werk.core.pdf_processor.find_tool_path') as mock_find_tool:
             mock_find_tool.return_value = None  # Tool not found
 
-            with pytest.raises(RuntimeError, match="Required tool.*not found"):
+            with pytest.raises(RuntimeError, match=r"Required tool.*not found"):
                 PDFProcessor(config)
 
     def test_processor_initialization_with_custom_tool_paths(self):
@@ -355,8 +347,6 @@ class TestPDFProcessor:
         """Test PDF analysis performs reasonably with larger PDFs."""
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
             # Create PDF with multiple pages
-            from reportlab.lib.pagesizes import letter
-            from reportlab.pdfgen import canvas
 
             c = canvas.Canvas(temp_file.name, pagesize=letter)
             c.setTitle('Large Test Document')
@@ -371,7 +361,6 @@ class TestPDFProcessor:
             pdf_path = Path(temp_file.name)
 
             try:
-                import time
                 start_time = time.time()
 
                 pdf_info = await processor.analyze_pdf(pdf_path)
@@ -389,14 +378,14 @@ class TestPDFProcessor:
     @pytest.mark.asyncio
     async def test_enhance_with_ai_structure_workflow(self, processor, sample_pdf, caplog):
         """Test the full workflow of _enhance_with_ai_structure."""
-        from unittest.mock import AsyncMock, MagicMock
 
-        output_path = Path(tempfile.mktemp(suffix=".pdf"))
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
+            output_path = Path(temp_file.name)
 
         # Mock the AI Service
         mock_ai_service = AsyncMock()
         mock_ai_service.enhance_pdf_structure.return_value = "- old\n+ new"
-        
+
         with patch('vexy_pdf_werk.core.pdf_processor.AIServiceFactory.create_service') as mock_create_service:
             mock_create_service.return_value = mock_ai_service
 
@@ -411,8 +400,6 @@ class TestPDFProcessor:
                 mock_apply_diff.return_value = {"is_updated_qdf": True}
 
                 # Check that the placeholder warning is logged
-                import logging
-                from loguru import logger
                 caplog.set_level(logging.WARNING)
                 handler_id = logger.add(caplog.handler, format="{message}")
 
@@ -425,13 +412,11 @@ class TestPDFProcessor:
 
                 # Assertions
                 assert mock_create_service.called
-                
                 # With a 1-page PDF, these should be called once
                 mock_to_json.assert_called_once_with(sample_pdf, 0)
                 mock_extract_text.assert_called_once_with({"is_qdf": True})
                 mock_ai_service.enhance_pdf_structure.assert_called_once_with("some text")
                 mock_apply_diff.assert_called_once_with({"is_qdf": True}, "- old\n+ new")
-                
                 # Check that the final PDF was saved
                 assert output_path.exists()
 
@@ -441,7 +426,8 @@ class TestPDFProcessor:
     @pytest.mark.asyncio
     async def test_enhance_with_ai_structure_no_ai_service(self, processor, sample_pdf):
         """Test that enhance_with_ai_structure handles unavailable AI service gracefully."""
-        output_path = Path(tempfile.mktemp(suffix=".pdf"))
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
+            output_path = Path(temp_file.name)
 
         with patch('vexy_pdf_werk.core.pdf_processor.AIServiceFactory.create_service') as mock_create_service:
             mock_create_service.return_value = None  # No AI service available
@@ -458,9 +444,9 @@ class TestPDFProcessor:
     @pytest.mark.asyncio
     async def test_enhance_with_ai_structure_empty_diff(self, processor, sample_pdf):
         """Test handling when AI service returns empty diff."""
-        from unittest.mock import AsyncMock
 
-        output_path = Path(tempfile.mktemp(suffix=".pdf"))
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
+            output_path = Path(temp_file.name)
 
         # Mock AI service to return empty diff
         mock_ai_service = AsyncMock()
@@ -491,9 +477,9 @@ class TestPDFProcessor:
     @pytest.mark.asyncio
     async def test_enhance_with_ai_structure_no_text_content(self, processor, sample_pdf):
         """Test handling when PDF page has no extractable text."""
-        from unittest.mock import AsyncMock
 
-        output_path = Path(tempfile.mktemp(suffix=".pdf"))
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
+            output_path = Path(temp_file.name)
 
         mock_ai_service = AsyncMock()
         mock_ai_service.enhance_pdf_structure.return_value = "+ new content"
@@ -518,11 +504,9 @@ class TestPDFProcessor:
     @pytest.mark.asyncio
     async def test_enhance_with_ai_structure_ai_service_error(self, processor, sample_pdf, caplog):
         """Test handling when AI service throws an exception."""
-        from unittest.mock import AsyncMock
-        import logging
-        from loguru import logger
 
-        output_path = Path(tempfile.mktemp(suffix=".pdf"))
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
+            output_path = Path(temp_file.name)
 
         # Mock AI service to throw exception
         mock_ai_service = AsyncMock()
@@ -554,11 +538,9 @@ class TestPDFProcessor:
     @pytest.mark.asyncio
     async def test_enhance_with_ai_structure_qdf_conversion_error(self, processor, sample_pdf, caplog):
         """Test handling when QDF conversion fails."""
-        from unittest.mock import AsyncMock
-        import logging
-        from loguru import logger
 
-        output_path = Path(tempfile.mktemp(suffix=".pdf"))
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
+            output_path = Path(temp_file.name)
 
         mock_ai_service = AsyncMock()
         mock_ai_service.enhance_pdf_structure.return_value = "+ enhanced content"

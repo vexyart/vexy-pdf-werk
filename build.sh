@@ -2,22 +2,15 @@
 
 set -e
 
-hatch clean
+uv venv --clear
 
-echo "Building Vexy PDF Werk..."
+uv pip install -e .
 
-# Build the package
-hatch build
+uv run hatch clean
 
-echo "Building documentation..."
+uv run hatch build
 
-# Install documentation dependencies
-uv pip install mkdocs mkdocs-material
-
-# Build the documentation explicitly from src_docs to docs with Material
-mkdocs build -f mkdocs.yml -d docs
-
-# Ensure GitHub Pages doesn't run Jekyll
-touch docs/.nojekyll
+uv run mkdocs build -f mkdocs.yml -d docs
 
 gitnextver .
+

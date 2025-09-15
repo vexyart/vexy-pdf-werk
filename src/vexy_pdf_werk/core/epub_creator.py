@@ -2,6 +2,7 @@
 """ePub creation functionality from Markdown content."""
 
 import asyncio
+import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,6 +19,7 @@ class EpubCreationResult:
     success: bool
     output_path: Path | None = None
     error: str | None = None
+    processing_time: float = 0.0
 
 
 class EpubCreator:
@@ -51,10 +53,14 @@ class EpubCreator:
         Returns:
             Result of ePub creation
         """
+        start_time = time.time()
+
         if not markdown_result.success or not markdown_result.pages:
+            processing_time = time.time() - start_time
             return EpubCreationResult(
                 success=False,
-                error="No valid markdown content to convert to ePub"
+                error="No valid markdown content to convert to ePub",
+                processing_time=processing_time
             )
 
         try:
@@ -141,7 +147,12 @@ class EpubCreator:
                     "process_stage": "epub_success"
                 }
             )
-            return EpubCreationResult(success=True, output_path=output_path)
+            processing_time = time.time() - start_time
+            return EpubCreationResult(
+                success=True,
+                output_path=output_path,
+                processing_time=processing_time
+            )
 
         except Exception as e:
             error_msg = f"ePub creation failed: {e}"
@@ -156,7 +167,12 @@ class EpubCreator:
                     "process_stage": "epub_error"
                 }
             )
-            return EpubCreationResult(success=False, error=error_msg)
+            processing_time = time.time() - start_time
+            return EpubCreationResult(
+                success=False,
+                error=error_msg,
+                processing_time=processing_time
+            )
 
     def _determine_book_title(
         self,

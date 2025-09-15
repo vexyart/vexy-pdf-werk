@@ -3,6 +3,7 @@
 
 import asyncio
 import re
+import time
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -42,6 +43,7 @@ class MarkdownResult:
     pages: list[MarkdownPage]
     error: str | None = None
     total_pages: int = 0
+    processing_time: float = 0.0
 
 
 class MarkdownConverter(ABC):
@@ -102,6 +104,8 @@ class BasicConverter(MarkdownConverter):
         Returns:
             Conversion result with markdown pages
         """
+        start_time = time.time()
+
         # Get file size for logging context
         file_size_mb = pdf_path.stat().st_size / (1024 * 1024)
 
@@ -186,7 +190,13 @@ class BasicConverter(MarkdownConverter):
                     }
                 )
 
-                return MarkdownResult(success=True, pages=pages, total_pages=total_pages)
+                processing_time = time.time() - start_time
+                return MarkdownResult(
+                    success=True,
+                    pages=pages,
+                    total_pages=total_pages,
+                    processing_time=processing_time
+                )
 
         except Exception as e:
             logger.error(
@@ -200,7 +210,13 @@ class BasicConverter(MarkdownConverter):
                     "process_stage": "markdown_error"
                 }
             )
-            return MarkdownResult(success=False, pages=[], error=str(e))
+            processing_time = time.time() - start_time
+            return MarkdownResult(
+                success=False,
+                pages=[],
+                error=str(e),
+                processing_time=processing_time
+            )
 
     def _read_pdf_sync(self, pdf_path: Path) -> pypdf.PdfReader:
         """Synchronous PDF reading for use in thread executor."""
