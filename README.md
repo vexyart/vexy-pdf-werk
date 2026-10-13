@@ -2,6 +2,8 @@
 
 **Transform PDFs into high-quality, accessible formats**
 
+**Documentation:** https://vexy.dev/vexy-pdf-werk/
+
 Vexy PDF Werk (VPW) is a Python package that converts PDF documents into multiple high-quality formats using modern tools. Transform your PDFs into PDF/A archives, paginated Markdown, ePub books, and structured bibliographic metadata.
 
 ## Features
@@ -137,6 +139,7 @@ output/
 
 ### Required Dependencies
 - Python 3.10+
+- ocrmypdf (needed by every `vpw process` run)
 - tesseract-ocr
 - qpdf
 - ghostscript

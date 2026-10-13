@@ -13,7 +13,6 @@ _version.py
 !.vscode/settings.json
 !.vscode/tasks.json
 !build/.gitkeep
-!dist/.gitkeep
 ._*
 .\#*
 .apdisk
@@ -193,3 +192,6 @@ wheels/
 yarn-debug.log*
 yarn-error.log*
 yarn.lock
+.omc/
+site/
+src/vexy_pdf_werk/_version.py
