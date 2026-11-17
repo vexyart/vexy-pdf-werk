@@ -1,3 +1,8 @@
+---
+this_file: src_docs/md/installation.md
+tags: [Installation]
+---
+
 # Installation
 
 VPW needs three things: the Python package, two external command-line tools that every run uses, and, optionally, one or more advanced Markdown converters.

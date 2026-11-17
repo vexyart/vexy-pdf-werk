@@ -1,3 +1,8 @@
+---
+this_file: src_docs/md/cli.md
+tags: [Command line]
+---
+
 # Command line
 
 The `vpw` command has three subcommands: `process`, `config` and `version`. It is built with [Python Fire](https://github.com/google/python-fire), so each flag can be written with an underscore or a hyphen (`--output_dir` or `--output-dir`) and has a one-letter short form.

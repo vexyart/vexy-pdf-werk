@@ -67,3 +67,9 @@ The codebase is now simplified and focused on core functionality:
 - **User-Focused**: Features that users actually need, not enterprise bloat
 
 🎉 **Project Status**: All planned work completed and released as v1.2.0
+
+## 2026-10-18: documentation plugins
+
+- Use MaterialX search, inherited metadata and a topic index; keep ordered navigation in awesome-nav.
+- The documentation wrapper installs the plugins required by this site.
+- Strict documentation build and rendered output checks passed.

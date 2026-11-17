@@ -1,3 +1,8 @@
+---
+this_file: src_docs/md/troubleshooting.md
+tags: [Troubleshooting]
+---
+
 # Troubleshooting
 
 VPW logs every step at the `DEBUG` level to standard error, so most runs already show where a problem started. Add `--verbose` to also print a Python traceback when the run fails:

@@ -1,3 +1,8 @@
+---
+this_file: src_docs/md/configuration.md
+tags: [Configuration]
+---
+
 # Configuration
 
 VPW reads its settings from a TOML file and a few environment variables. Settings it does not find keep their built-in defaults, so you need a file only to change something.

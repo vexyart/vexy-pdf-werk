@@ -390,3 +390,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Minimal CLI (MVP): `vexy_pdf_werk/cli.py` with `version` and `process` commands
 - Console script entry `vpw` in `pyproject.toml`
+
+## 2026-10-18: documentation plugins
+
+- Use MaterialX search, inherited metadata and a topic index; keep ordered navigation in awesome-nav.
+- The documentation wrapper installs the plugins required by this site.
+- Strict documentation build and rendered output checks passed.
