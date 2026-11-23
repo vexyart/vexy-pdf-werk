@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Placeholder for future changes
+### Changed
+
+- Site now uses the fly-january 0.1.1 theme (chrome: none)
 
 ## [1.2.0] - Major Simplification & Enterprise Feature Removal - 2025-09-15
 

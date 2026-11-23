@@ -145,6 +145,8 @@ output_directory = "./output"
 
 ## Development
 
+Edit documentation pages in `src_docs/md/` and configure the site in `src_docs/mkdocs.yml`. Keep `extra.fly.chrome` set to `none` for this unofficial site. Run `./build.sh docs` to rebuild `docs/` with ProperDocs and fly-january 0.1.1 in strict mode.
+
 This project uses modern Python tooling:
 
 - **Package Management**: uv + hatch (use `uv run` to run but for other operations use `hatch` like `hatch test`)

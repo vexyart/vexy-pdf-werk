@@ -1,4 +1,4 @@
-# Vexy PDF Werk
+# Vexy PDF Werk {data-toc-label="PDF Werk"}
 
 Vexy PDF Werk (VPW) is a Python package and a command-line tool, `vpw`, that takes one PDF file and produces up to four outputs from it:
 
