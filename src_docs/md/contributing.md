@@ -65,7 +65,7 @@ The `push.yml` workflow runs `ruff check` and `ruff format --check`, then the te
 
 ## Build the documentation
 
-The documentation build uses ProperDocs with the fly-january 0.1.1 theme and native navigation (`chrome: none`). The build script installs its dependencies with `uvx` on Python 3.13.
+The documentation build uses ProperDocs with the fly-january 0.2.1 theme and native navigation (`chrome: none`). The build script installs its dependencies with `uvx` on Python 3.13.
 
 1. Edit or add pages in `src_docs/md/`. Add new pages to the `nav` list in `src_docs/md/.nav.yml`.
 2. Preview the site:

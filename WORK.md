@@ -5,7 +5,7 @@
 
 ## Documentation theme migration
 
-- Rebuilt `docs/` with fly-january 0.1.1 and `chrome: none`. The navigation uses “PDF Werk” and the home article retains its full title and existing anchor.
+- Rebuilt `docs/` with fly-january 0.2.1 and `chrome: none`. The navigation uses “PDF Werk” and the home article retains its full title and existing anchor.
 - `./build.sh docs` completed in strict mode with zero warnings. The 12 HTML pages include the 404 page.
 - `python -m pytest tests/` produced the same results before and after migration on Python 3.12.12. Both runs had 152 passed, 21 failed and 3 skipped, with identical failing tests.
 
