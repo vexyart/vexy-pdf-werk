@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The documentation build now accepts fly-january 0.3.0 or later.
+
 - Site now uses the fly-january 0.2.1 theme (chrome: none). The strict build produced 12 HTML pages (`ed14f27`).
 - PyPI owner action: configure a trusted publisher for project `vexy-pdf-werk`, GitHub repository `vexyart/vexy-pdf-werk`, workflow `release.yml`, environment `pypi`. The tag-triggered workflow uses OIDC (`26e9212`).
 
