@@ -258,7 +258,7 @@ PDF Input → Analysis → OCR Enhancement → Content Extraction → Format Gen
 
 ## Development
 
-Run `./build.sh docs` to build the documentation into `docs/` in strict mode. The script installs ProperDocs and fly-january 0.3.0 or later with `uvx`. For a local preview, run `src_docs/build.sh serve`.
+Run `./build.sh docs` to build the documentation into `docs/` in strict mode. The script installs ProperDocs and fly-january 0.4.0 or later (remote theme assets) with `uvx`. For a local preview, run `src_docs/build.sh serve`.
 
 This project uses modern Python tooling:
 
