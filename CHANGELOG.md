@@ -11,12 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Site now uses the fly-january 0.2.1 theme (chrome: none)
+- Site now uses the fly-january 0.2.1 theme (chrome: none). The strict build produced 12 HTML pages (`ed14f27`).
+- PyPI owner action: configure a trusted publisher for project `vexy-pdf-werk`, GitHub repository `vexyart/vexy-pdf-werk`, workflow `release.yml`, environment `pypi`. The tag-triggered workflow uses OIDC (`26e9212`).
+
+## [1.2.2]
+
+- Documented how to recover from encrypted or corrupt inputs in the troubleshooting guide (`53e9923`).
+
+## [1.2.1]
+
+- Added a reusable ReportLab fixture that reopens its PDF with pikepdf. The one-page fixture passed the input validation check (`6002a0e`).
 
 ## [1.2.0] - Major Simplification & Enterprise Feature Removal - 2025-09-15
 
+- Added the simplified CLI and configuration with a runnable example in `examples/python_examples/simple_usage.py` (`689c132`).
+- Added shared async helpers and mocks (`689c132`). Both `test_convert_pdf_with_async_helper` and `test_convert_pdf_with_timeout` passed.
+- Published the v1.2.0 GitHub release from tag `v1.2.0` at `689c132` on 2025-09-15.
+- The simplified PDF validator (`689c132`) passed ten checks. It accepted text, image-only and uppercase-extension PDFs and rejected missing paths, directories, wrong extensions, empty, zero-page, malformed and password-protected files.
+
 ### Changed - Enterprise Feature Removal & Simplification ✅
-- **Validation Simplification**: Removed enterprise disk space validation and health checks
+- **Validation Simplification**: Removed enterprise disk space validation and health checks (`689c132`)
   - Simplified `validation.py` from 329 lines to 89 lines (73% reduction)
   - Removed paranoid permission checking and resource monitoring
   - Simplified to basic file existence and format validation only
@@ -39,21 +53,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed references to resource management and health monitoring
 
 ### Added - Phase 2 Complete: Real Advanced Markdown Converter Implementations ✅
-- **MarkerConverter - Production Ready**: Full implementation using marker-pdf API
+- **MarkerConverter**: Implemented the marker-pdf adapter in `689c132`.
   - Real integration with `PdfConverter`, `create_model_dict()`, and `text_from_rendered()`
   - Intelligent page splitting based on markdown section headers for consistent pagination
   - Async execution in ThreadPoolExecutor to prevent UI blocking
   - Comprehensive error handling with graceful fallback to BasicConverter
   - Performance metrics and structured logging with process stage tracking
 
-- **MarkItDownConverter - Production Ready**: Full implementation using Microsoft's markitdown
+- **MarkItDownConverter**: Implemented the MarkItDown adapter in `689c132`.
   - Real integration with `MarkItDown().convert()` API for high-quality PDF conversion
   - Advanced text splitting logic to convert full-document output into paginated format
   - Proper handling of markitdown's `text_content` output with markdown formatting preservation
   - Robust error handling and automatic fallback when markitdown unavailable
   - Performance monitoring and detailed logging for conversion tracking
 
-- **DoclingConverter - Production Ready**: Full implementation using IBM's docling
+- **DoclingConverter**: Implemented the Docling adapter in `689c132`.
   - Real integration with `DocumentConverter().convert()` for sophisticated document understanding
   - Proper markdown export using `result.document.export_to_markdown()` API
   - Advanced content parsing with intelligent page boundary detection
@@ -63,8 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Comprehensive Integration Testing**: Extensive test suite with 20+ new integration tests
   - Availability detection tests for all converters with real dependency checking
   - Fallback behavior validation when dependencies are missing or fail
-  - Real API usage tests that run when optional dependencies are available
-  - Performance comparison framework for benchmarking different converters
+  - Added real-conversion tests for each optional backend (`689c132`). The default test environment skips all three.
+  - Added `test_converter_performance_comparison` for available backends (`689c132`).
   - Quality validation tests for page splitting and content preservation
   - Mock-based priority order verification for auto-selection logic
 
@@ -81,15 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality Assurance**: Extensive test coverage including edge cases, error scenarios, and integration tests
 - **Documentation**: Updated all converters with comprehensive docstrings and usage examples
 
-### Phase 2 Completion Summary
-**Status**: ✅ COMPLETE - Production-ready advanced markdown converter system
-**Impact**: Users now have access to 3 high-quality PDF-to-Markdown conversion backends:
-- **marker-pdf**: State-of-the-art AI-powered conversion with superior formatting preservation
-- **markitdown**: Microsoft's robust document converter with broad format support
-- **docling**: IBM's sophisticated document understanding with advanced table/figure detection
-**Quality**: 100% test coverage, comprehensive error handling, performance monitoring, graceful fallbacks
-
 ### Docs
+- Updated the README with converter selection and fallback behavior (`689c132`).
+- Recorded the v1.2.0 changes under their release heading (`6002a0e`).
 - Cleanup: Removed completed tasks from `PLAN.md`, `TODO.md`, and `WORK.md` for clarity
 - Planning: Refocused next iteration on implementing actual converter functionality (not just skeletons)
 - Work log: Updated immediate tasks to research and implement real API integrations

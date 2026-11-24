@@ -959,20 +959,11 @@
 <p>This deletes <code>dist/</code>, runs <code>uv build</code>, and checks the result with <code>twine check</code>. <code>./build.sh</code> with no argument also builds the documentation, and <code>./build.sh docs</code> builds only the documentation.</p>
 <p>The version comes from the latest Git tag through <code>hatch-vcs</code>. Between tags, the built version is a development version such as <code>1.2.2.dev3</code>.</p>
 <h2 id="release-a-new-version">Release a new version<a aria-label="Permanent link" class="headerlink" href="#release-a-new-version" title="Permanent link">&para;</a></h2>
-<p>Releases are made from a clean <code>main</code> branch with <code>publish.sh</code>.</p>
-<p>Prerequisites: a PyPI token in <code>UV_PUBLISH_TOKEN</code> (or another credential that <code>uv publish</code> accepts), and push access to the repository.</p>
-<ol>
-<li>
-<p>Run:</p>
+<p>Push the intended release commit to the default branch. With GitHub CLI signed in to an account that can run repository workflows, run:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>./publish.sh
 </code></pre></div>
-</li>
-<li>
-<p>The script runs <code>uvx gitnextver</code>, which commits pending changes, creates the next <code>vX.Y.Z</code> tag and pushes it.</p>
-</li>
-<li>If <code>HEAD</code> now carries a <code>vX.Y.Z</code> tag, the script builds the package with <code>./build.sh package</code> and uploads <code>dist/*</code> with <code>uv publish</code>. If there was nothing to commit and no tag was made, it stops with an error.</li>
-</ol>
-<p>Pushing the tag also starts the <code>release.yml</code> workflow. It builds the package again, uploads it to PyPI (skipping files that <code>publish.sh</code> already uploaded), and creates a GitHub release with the built files attached.</p>
+<p>The script requests the next patch version. Pass an explicit tag such as <code>./publish.sh v1.4.0</code> to select a version. GitHub Actions creates the tag on the remote default branch or uses the existing tag. Pushing a <code>vMAJOR.MINOR.PATCH</code> tag also starts the workflow.</p>
+<p>The <code>release.yml</code> workflow builds the wheel and source distribution from the tag, attaches both to the GitHub release, and publishes the same files to PyPI using Trusted Publishing (OIDC). The PyPI project owner must configure a GitHub trusted publisher for <code>vexyart/vexy-pdf-werk</code>, workflow <code>release.yml</code>, environment <code>pypi</code>.</p>
 <h2 id="pull-requests">Pull requests<a aria-label="Permanent link" class="headerlink" href="#pull-requests" title="Permanent link">&para;</a></h2>
 <ol>
 <li>Create a branch from <code>main</code>.</li>

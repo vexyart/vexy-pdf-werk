@@ -98,20 +98,15 @@ The version comes from the latest Git tag through `hatch-vcs`. Between tags, the
 
 ## Release a new version
 
-Releases are made from a clean `main` branch with `publish.sh`.
+Push the intended release commit to the default branch. With GitHub CLI signed in to an account that can run repository workflows, run:
 
-Prerequisites: a PyPI token in `UV_PUBLISH_TOKEN` (or another credential that `uv publish` accepts), and push access to the repository.
+```bash
+./publish.sh
+```
 
-1. Run:
+The script requests the next patch version. Pass an explicit tag such as `./publish.sh v1.4.0` to select a version. GitHub Actions creates the tag on the remote default branch or uses the existing tag. Pushing a `vMAJOR.MINOR.PATCH` tag also starts the workflow.
 
-    ```bash
-    ./publish.sh
-    ```
-
-2. The script runs `uvx gitnextver`, which commits pending changes, creates the next `vX.Y.Z` tag and pushes it.
-3. If `HEAD` now carries a `vX.Y.Z` tag, the script builds the package with `./build.sh package` and uploads `dist/*` with `uv publish`. If there was nothing to commit and no tag was made, it stops with an error.
-
-Pushing the tag also starts the `release.yml` workflow. It builds the package again, uploads it to PyPI (skipping files that `publish.sh` already uploaded), and creates a GitHub release with the built files attached.
+The `release.yml` workflow builds the wheel and source distribution from the tag, attaches both to the GitHub release, and publishes the same files to PyPI using Trusted Publishing (OIDC). The PyPI project owner must configure a GitHub trusted publisher for `vexyart/vexy-pdf-werk`, workflow `release.yml`, environment `pypi`.
 
 ## Pull requests
 
